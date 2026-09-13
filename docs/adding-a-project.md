@@ -56,6 +56,24 @@ Every AI image is shown with the label "AI visualisation · indicative" and a cr
 
 The manifest tools each own their kinds and keep everything else: `make-postcards.mjs` owns developer + plan entries, `import-ai.mjs` owns AI stills; each re-sorts every hotspot's list by provenance (`viewer/media-kinds.js`, ruling: developer video > developer render > official embed > AI loop > AI still > plan detail), so the first entry is always the most trustworthy and the viewer's gallery shows the rest as further slides.
 
+## 4b. AI loops (optional; measured, ≈7.5 credits per clip)
+
+Turn an AI postcard into a 5-second silent loop. **Model card, stated before any call:** `kling3_0` (Kling v3.0) · `mode pro` · `sound off` · `duration 5` · `count 1` · `start_image` = `end_image` = the postcard (`media_import_url` of its live URL) — with start and end frames identical the clip is pulled back to its first frame, which is what closes the loop. It animates foliage, water, cloud shadows and a little camera drift; it cannot guarantee geometry and has no negative-prompt field. With a reference image the output keeps the postcard's aspect (3:2 came back as 1760×1176 although 16:9 was requested) — no pre-cropping. Preflight the credits with `get_cost`.
+
+Prompt = one base + one class clause (verbatim in `postcards/ai-log.json`):
+
+> One continuous locked-off shot from a fixed camera. The scene slowly comes alive: {CLASS}. Camera drift no more than two degrees, returning exactly to the starting composition so the clip loops seamlessly. Light, exposure and colour stay unchanged from the first frame to the last. Keep every building, tree, path and line exactly where it is; no new buildings, people, vehicles, text, signs or logos; no water unless it is visible in the frame. Silent.
+
+Classes — water: "ripples spread across the pool and its reflections shimmer, the surrounding planting sways lightly, a cloud shadow drifts across the stone steps"; lawn/foliage: "leaves and palm fronds sway in a light breeze, the grass ripples, a cloud shadow drifts slowly across the lawn"; plaza/court: "a light breeze moves the planting, a cloud shadow drifts across the paving"; portal/arrival: "the trees sway, a cloud shadow drifts along the boulevard".
+
+Procedure: download the clip into `source/ai-loops/`, then measure with `tools/media-lib.mjs` (`frameAt`, `ssim`, `reviewStrip`): **seam** = SSIM(first frame, last frame) must be ≥ 0.85 (Belvedere's pilot read 0.995), and the 3-frame review strip (0 / 2.5 / 5 s) must show no invented elements, no bent geometry, no cut or zoom. Accepted clips go through:
+
+```bash
+node tools/import-ai-video.mjs projects/<slug> selection-video.json   # encodes ≤1.5 MB H.264 (1280 wide, CRF 23→25), poster from frame 0, manifest 'ai-video' entry, provenance in ai-log.json
+```
+
+Every loop is labelled "AI loop · indicative" with the credit "AI visualisation via Higgsfield · indicative, not a developer video". Playback in the viewer is muted and inline; it autoplays only when the tab is visible, the visitor has not asked for reduced motion or data saving, and no tour is running — otherwise the poster and a play button; only the visible slide holds a decoder.
+
 ## 5. Deploy and verify (20 min)
 
 ```bash
