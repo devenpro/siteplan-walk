@@ -43,3 +43,22 @@ export function reviewStrip(src, dst, ts = [0, 2.5, 5]) {
   const p = ffprobe(src), fps = p.frames / Math.max(p.duration, 1e-6), sel = ts.map(t => `eq(n,${Math.min(p.frames - 1, Math.round(t * fps))})`).join('+');
   run('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-vf', `select='${sel}',scale=640:-2,tile=${ts.length}x1`, '-frames:v', '1', dst]); return dst;
 }
+
+// ---- audio layer (C2b): probe, loudness, a synthesised click, and the narration mix (voice + ducked ambience/music + click) ----
+export function hasAudio(file) { const j = JSON.parse(run('ffprobe', ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_name', '-of', 'json', file])); return !!(j.streams && j.streams.length); }
+export function loudness(file) { const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', file, '-af', 'ebur128=peak=true', '-f', 'null', '-'], { encoding: 'utf8' }); const all = [...String(r.stderr).matchAll(/I:\s*(-?[0-9.]+) LUFS/g)]; if (!all.length) throw new Error('loudness: no result\n' + r.stderr); return +all[all.length - 1][1]; }   // the last I: is the integrated summary; earlier ones are progress lines
+export function synthClick(dst, { ms = 60, gainDb = -20 } = {}) { run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', `anoisesrc=d=${ms / 1000}:c=pink:r=48000`, '-af', `highpass=f=1500,afade=t=out:st=0:d=${ms / 1000},volume=${gainDb}dB`, '-ar', '48000', '-ac', '2', dst]); return dst; }
+export function mixNarration({ video, voice, ambience = null, music = null, click = null, out, voiceLufs = -16, bedLufs = -26 }) {
+  const inputs = ['-i', video, '-i', voice], beds = [], labels = []; let idx = 2;
+  const addBed = f => { inputs.push('-i', f); beds.push(idx++); };
+  if (ambience) addBed(ambience); if (music) addBed(music); if (click) { inputs.push('-i', click); }
+  const clickIdx = click ? idx++ : null;
+  // loudnorm works at 192 kHz internally: resample to 48 kHz AFTER it, or the compressor and the mix downstream go silent
+  let fg = `[1:a]aformat=channel_layouts=stereo,loudnorm=I=${voiceLufs}:TP=-1.5:LRA=11,aresample=48000,asplit=${beds.length + 1}[v]` + beds.map((_, i) => `[k${i}]`).join('') + ';';
+  beds.forEach((b, i) => { fg += `[${b}:a]aformat=channel_layouts=stereo,loudnorm=I=${bedLufs}:TP=-2:LRA=7,aresample=48000[bd${i}];[bd${i}][k${i}]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[b${i}];`; labels.push(`[b${i}]`); });
+  if (clickIdx !== null) { fg += `[${clickIdx}:a]aresample=48000,aformat=channel_layouts=stereo,apad[c];`; labels.push('[c]'); }
+  fg += `[v]${labels.join('')}amix=inputs=${1 + labels.length}:normalize=0:duration=longest[a]`;
+  // bounded by the VIDEO's duration with -t, not -shortest: single-pass loudnorm buffers its input and -shortest then muxes nothing
+  run('ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', fg, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '96k', '-ar', '48000', '-ac', '2', '-t', String(ffprobe(video).duration), '-movflags', '+faststart', out]);
+  return { lufs: loudness(out), duration: ffprobe(out).duration, bytes: fs.statSync(out).size };
+}

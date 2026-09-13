@@ -52,3 +52,19 @@ test('cropCentre16x9 / squashTo16x9 / reviewStrip produce the expected shapes', 
   const s = path.join(tmp, 'squash.png'); squashTo16x9(still, s); assert.deepEqual([ffprobe(s).width, ffprobe(s).height], [1280, 720]);
   const strip = path.join(tmp, 'strip.png'); reviewStrip(synth, strip, [0, 0.5, 0.9]); assert.equal(ffprobe(strip).width, 1920);
 });
+
+// ---- audio layer (C2b) on synthetic inputs: a tone stands in for speech, quiet pink noise for ambience ----
+import { hasAudio, loudness, synthClick, mixNarration } from '../tools/media-lib.mjs';
+const ffprobeDuration = f => +JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'json', f], { encoding: 'utf8' })).format.duration;
+const voice = path.join(tmp, 'voice.wav'), bed = path.join(tmp, 'bed.wav'), click = path.join(tmp, 'click.wav'), narrated = path.join(tmp, 'narrated.mp4');
+execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=1:sample_rate=48000', voice]);
+execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anoisesrc=d=1:c=pink:r=48000:a=0.05', bed]);
+test('hasAudio / loudness / synthClick', () => {
+  assert.equal(hasAudio(synth), false); assert.equal(hasAudio(voice), true);
+  const l = loudness(voice); assert.ok(l < 0 && l > -40, 'LUFS in a sane range: ' + l);
+  synthClick(click); assert.ok(hasAudio(click)); assert.ok(ffprobeDuration(click) < 0.2);
+});
+test('mixNarration: muxes voice + ducked bed + click onto the video, normalised near -16 LUFS, audio stream present, duration = video', () => {
+  const r = mixNarration({ video: synth, voice, ambience: bed, click, out: narrated });
+  assert.ok(hasAudio(narrated)); assert.ok(Math.abs(r.duration - 1) < 0.15); assert.ok(r.lufs > -20 && r.lufs < -12, 'mix LUFS ' + r.lufs); assert.ok(r.bytes > 1000);
+});
