@@ -3,3 +3,4 @@ node_modules/
 *.log
 tools/_*.mjs
 projects/*/source/ai-ground-*.png
+projects/*/source/ai-loops/
