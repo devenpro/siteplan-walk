@@ -4,3 +4,4 @@ node_modules/
 tools/_*.mjs
 projects/*/source/ai-ground-*.png
 projects/*/source/ai-loops/
+projects/*/source/ai-clips/
