@@ -180,5 +180,83 @@
     "subject": "pair of pickleball courts beside the oval skating rink",
     "promptPrefix": "Photorealistic architectural visualisation, late-afternoon warm sunlight (yoga/meditation: soft early-morning), eye-level 35mm or elevated three-quarter view, new residential development in Bengaluru; match the reference images: cream-and-white towers with vertical fins, brick-paved paths, tropical planting, timber pergolas; no text, no signage, no logos, no one looking at camera.",
     "date": "2026-09-12"
+  },
+  {
+    "id": "stepped-well-plaza",
+    "kind": "ai-video",
+    "file": "ai-stepped-well-plaza.mp4",
+    "poster": "ai-stepped-well-plaza-poster.jpg",
+    "jobId": "2e621da9-214e-426a-b4b8-91d7d4b2380d",
+    "model": "kling3_0 (Kling v3.0), served via Higgsfield",
+    "settings": {
+      "mode": "pro",
+      "sound": "off",
+      "duration": 5,
+      "aspect_ratio": "16:9 requested — output kept the reference's 3:2",
+      "count": 1,
+      "start_image": "= end_image = the postcard ai-<id>.jpg (media_import_url of the live URL)",
+      "creditsPerClip": 7.5
+    },
+    "prompt": "One continuous locked-off shot from a fixed camera. The scene slowly comes alive: ripples spread across the pool and its reflections shimmer, the surrounding planting sways lightly, a cloud shadow drifts across the stone steps. Camera drift no more than two degrees, returning exactly to the starting composition so the clip loops seamlessly. Light, exposure and colour stay unchanged from the first frame to the last. Keep every building, tree, path and line exactly where it is; no new buildings, people, vehicles, text, signs or logos; no water unless it is visible in the frame. Silent.",
+    "measures": {
+      "duration": 5.04,
+      "width": 1760,
+      "height": 1176,
+      "frames": 121,
+      "bytesRaw": 4148415,
+      "seam": 0.9952,
+      "aCrop": 0.4856,
+      "aSquash": 0.9693,
+      "route": "squash",
+      "margin": 0.4838,
+      "verdict": "ACCEPT",
+      "seamFloor": 0.85,
+      "aspectRoute": "keep — Kling returned the postcard's 3:2 (1760x1176) despite aspect_ratio 16:9; no crop, no squash, no pre-crop needed for the batch",
+      "visual": "composition locked, no invented elements, no cut/zoom, last frame = first; people present were already in the still"
+    },
+    "encode": {
+      "bytes": 869845,
+      "crf": 23
+    },
+    "date": "2026-09-13"
+  },
+  {
+    "id": "yoga-lawn",
+    "kind": "ai-video",
+    "file": "ai-yoga-lawn.mp4",
+    "poster": "ai-yoga-lawn-poster.jpg",
+    "jobId": "24cdbee3-77ac-4aee-aeb5-56ebd2faa1c1",
+    "model": "kling3_0 (Kling v3.0), served via Higgsfield",
+    "settings": {
+      "mode": "pro",
+      "sound": "off",
+      "duration": 5,
+      "aspect_ratio": "16:9 requested — output kept the reference's 3:2",
+      "count": 1,
+      "start_image": "= end_image = the postcard ai-<id>.jpg (media_import_url of the live URL)",
+      "creditsPerClip": 7.5
+    },
+    "prompt": "One continuous locked-off shot from a fixed camera. The scene slowly comes alive: leaves and palm fronds sway in a light breeze, the grass ripples, a cloud shadow drifts slowly across the lawn. Camera drift no more than two degrees, returning exactly to the starting composition so the clip loops seamlessly. Light, exposure and colour stay unchanged from the first frame to the last. Keep every building, tree, path and line exactly where it is; no new buildings, people, vehicles, text, signs or logos; no water unless it is visible in the frame. Silent.",
+    "measures": {
+      "duration": 5.04,
+      "width": 1760,
+      "height": 1176,
+      "frames": 121,
+      "bytesRaw": 3723891,
+      "seam": 0.9951,
+      "aCrop": 0.5522,
+      "aSquash": 0.972,
+      "route": "squash",
+      "margin": 0.4198,
+      "verdict": "ACCEPT",
+      "seamFloor": 0.85,
+      "aspectRoute": "keep — Kling returned the postcard's 3:2 (1760x1176) despite aspect_ratio 16:9; no crop, no squash, no pre-crop needed for the batch",
+      "visual": "composition locked, no invented elements, no cut/zoom, last frame = first; people present were already in the still"
+    },
+    "encode": {
+      "bytes": 797781,
+      "crf": 23
+    },
+    "date": "2026-09-13"
   }
 ]

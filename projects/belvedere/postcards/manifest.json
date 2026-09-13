@@ -196,6 +196,18 @@
     ],
     "stepped-well-plaza": [
       {
+        "file": "ai-stepped-well-plaza.mp4",
+        "poster": "ai-stepped-well-plaza-poster.jpg",
+        "kind": "ai-video",
+        "duration": 5,
+        "width": 1280,
+        "height": 856,
+        "loop": true,
+        "from": "ai-stepped-well-plaza.jpg",
+        "jobId": "2e621da9-214e-426a-b4b8-91d7d4b2380d",
+        "credit": "AI visualisation via Higgsfield · indicative, not a developer video"
+      },
+      {
         "file": "ai-stepped-well-plaza.jpg",
         "kind": "ai",
         "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
@@ -375,6 +387,18 @@
       }
     ],
     "yoga-lawn": [
+      {
+        "file": "ai-yoga-lawn.mp4",
+        "poster": "ai-yoga-lawn-poster.jpg",
+        "kind": "ai-video",
+        "duration": 5,
+        "width": 1280,
+        "height": 856,
+        "loop": true,
+        "from": "ai-yoga-lawn.jpg",
+        "jobId": "24cdbee3-77ac-4aee-aeb5-56ebd2faa1c1",
+        "credit": "AI visualisation via Higgsfield · indicative, not a developer video"
+      },
       {
         "file": "ai-yoga-lawn.jpg",
         "kind": "ai",

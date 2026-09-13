@@ -1,0 +1,34 @@
+{
+  "stepped-well-plaza": {
+    "duration": 5.04,
+    "width": 1760,
+    "height": 1176,
+    "frames": 121,
+    "bytesRaw": 4148415,
+    "seam": 0.9952,
+    "aCrop": 0.4856,
+    "aSquash": 0.9693,
+    "route": "squash",
+    "margin": 0.4838,
+    "verdict": "ACCEPT",
+    "seamFloor": 0.85,
+    "aspectRoute": "keep \u2014 Kling returned the postcard's 3:2 (1760x1176) despite aspect_ratio 16:9; no crop, no squash, no pre-crop needed for the batch",
+    "visual": "composition locked, no invented elements, no cut/zoom, last frame = first; people present were already in the still"
+  },
+  "yoga-lawn": {
+    "duration": 5.04,
+    "width": 1760,
+    "height": 1176,
+    "frames": 121,
+    "bytesRaw": 3723891,
+    "seam": 0.9951,
+    "aCrop": 0.5522,
+    "aSquash": 0.972,
+    "route": "squash",
+    "margin": 0.4198,
+    "verdict": "ACCEPT",
+    "seamFloor": 0.85,
+    "aspectRoute": "keep \u2014 Kling returned the postcard's 3:2 (1760x1176) despite aspect_ratio 16:9; no crop, no squash, no pre-crop needed for the batch",
+    "visual": "composition locked, no invented elements, no cut/zoom, last frame = first; people present were already in the still"
+  }
+}
