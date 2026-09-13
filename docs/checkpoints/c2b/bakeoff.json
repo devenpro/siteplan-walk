@@ -1,0 +1,104 @@
+{
+  "gemini_omni_flash_1_1": {
+    "credits": 24,
+    "duration": 8,
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "bytesRaw": 6424915,
+    "motionIndex": 0.4713,
+    "motionSteps": [
+      0.5022,
+      0.4771,
+      0.4716,
+      0.4783,
+      0.4466,
+      0.4547,
+      0.4685
+    ],
+    "aspect": "crop",
+    "aCrop": 0.833,
+    "aSquash": 0.471,
+    "aPad": 0.359,
+    "audio": true,
+    "ambienceLufs": -42.4
+  },
+  "_baseline": {
+    "kling3_0_pro_loop_C2": {
+      "motionIndex": 0.0027,
+      "note": "C2 silent loop, start=end frame"
+    }
+  },
+  "kling3_0_turbo": {
+    "credits": 12,
+    "duration": 8.04,
+    "width": 1172,
+    "height": 784,
+    "fps": 24,
+    "bytesRaw": 14446094,
+    "motionIndex": 0.3773,
+    "motionSteps": [
+      0.3798,
+      0.391,
+      0.3901,
+      0.385,
+      0.3756,
+      0.3643,
+      0.3553
+    ],
+    "aspect": "squash",
+    "aCrop": 0.487,
+    "aSquash": 0.936,
+    "aPad": 0.415,
+    "audio": true,
+    "ambienceLufs": -29.9
+  },
+  "wan3_0": {
+    "credits": 14,
+    "duration": 8.03,
+    "width": 1280,
+    "height": 720,
+    "fps": 29.9,
+    "bytesRaw": 23467106,
+    "motionIndex": 0.496,
+    "motionSteps": [
+      0.4609,
+      0.4961,
+      0.5061,
+      0.4975,
+      0.4963,
+      0.5077,
+      0.5077
+    ],
+    "aspect": "crop",
+    "aCrop": 0.8,
+    "aSquash": 0.476,
+    "aPad": 0.361,
+    "audio": true,
+    "ambienceLufs": -38.1
+  },
+  "seedance_2_5": {
+    "credits": 52,
+    "duration": 8.04,
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "bytesRaw": 5349282,
+    "motionIndex": 0.4054,
+    "motionSteps": [
+      0.4327,
+      0.4179,
+      0.4086,
+      0.4019,
+      0.3964,
+      0.3928,
+      0.3876
+    ],
+    "aspect": "letterbox",
+    "aCrop": 0.378,
+    "aSquash": 0.373,
+    "aPad": 0.378,
+    "audio": true,
+    "ambienceLufs": -34.5
+  }
+}
