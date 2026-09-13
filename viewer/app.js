@@ -360,7 +360,7 @@ const hotspots = site.hotspots.map(h => {
 const themeName = Object.fromEntries((site.themes || []).map(t => [t.id, t.name]));
 const occluders = Object.values(volumeMeshes).filter(m => m.userData.volume.kind !== 'future');
 const pinEls = new Map(); let selected = null, activeTheme = null;
-const gallery = createGallery({ strip: $('#dStrip'), dots: $('#dDots'), prev: $('#dPrev'), next: $('#dNext'), badge: $('#dBadge'), credit: $('#dCredit'), base: BASE });
+const gallery = createGallery({ strip: $('#dStrip'), dots: $('#dDots'), prev: $('#dPrev'), next: $('#dNext'), badge: $('#dBadge'), credit: $('#dCredit'), base: BASE, canAutoplay: () => !tour });   // no autoplay during a tour (ruling 13)
 
 // pins (DOM, positioned by CSS2DRenderer)
 for (const h of hotspots) {
@@ -422,7 +422,7 @@ function flyToHotspot(h) {
 }
 function deselect() {
   selected = null; ring.visible = false; for (const x of hotspots) pinEls.get(x.id).classList.remove('active');
-  document.querySelectorAll('#hotlist li.item').forEach(li => li.classList.remove('active')); showHome(); history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('#hotlist li.item').forEach(li => li.classList.remove('active')); gallery.clear(); showHome(); history.replaceState(null, '', location.pathname + location.search);
 }
 $('#btnBack').addEventListener('click', deselect);
 $('#btnFly').addEventListener('click', () => { const h = hotspots.find(x => x.id === selected); if (h) flyToHotspot(h); });
@@ -529,8 +529,9 @@ renderer.setAnimationLoop(now => {
   if (Math.abs(lightTarget - lightK) > 0.001) { lightK += Math.sign(lightTarget - lightK) * Math.min(Math.abs(lightTarget - lightK), dt / 1.2); applyLighting(lightK); dirty = true; }
   if (controls.enabled && controls.update()) dirty = true;
   const water = waterInView(); if (water) waterTex.offset.set(now * 0.000012, now * 0.000007);   // ≈0.5 m/s drift across the 38.4 m tile
-  const animating = !!tween || (tour && !tour.paused) || ring.visible || now < dirtyUntil;
+  const moving = !!tween || (tour && !tour.paused) || now < dirtyUntil, animating = moving || ring.visible;
   if (!dirty && !animating) { if (FX.has('stop') || now - lastRender < (water ? 1000 / TIER.waterFps : 90)) { prevBusy = false; return; } }   // idle: ~11 fps keeps the compositor fed; TIER.waterFps while a pool is on screen
+  if (!dirty && !moving && ring.visible && gallery.playing && now - lastRender < 50) { prevBusy = false; return; }   // a loop is playing: the ring pulse drops to 20 fps so the phone's decoder and GPU are not both flat out
   const busy = dirty || animating; noteFrame(now, busy);
   dirty = false; lastRender = now;
   renderer.info.reset();

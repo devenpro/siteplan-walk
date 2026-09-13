@@ -124,6 +124,9 @@ body { font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif
 .badge.developer { background: #e8f0e6; border-color: #b9d1b4; color: #2f5a2a; }
 .badge.video, .badge.embed { background: #e8f0e6; border-color: #b9d1b4; color: #2f5a2a; }
 .badge.ai-video { background: #fff2e4; border-color: #f0c9a3; color: #8a4c12; }
+.postcard .video video { width: 100%; aspect-ratio: inherit; object-fit: cover; display: block; background: #000; }
+.postcard .playbtn { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border: 0; border-radius: 50%; background: rgba(29,26,22,.72); cursor: pointer; }
+.postcard .playbtn::after { content: ""; position: absolute; left: 22px; top: 16px; border-style: solid; border-width: 12px 0 12px 18px; border-color: transparent transparent transparent #fff; }
 .caption { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
 .detail-actions { display: flex; gap: 8px; }
 .detail-actions .btn { padding: 8px 12px; font-size: 13px; }
