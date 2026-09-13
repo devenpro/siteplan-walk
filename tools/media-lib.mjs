@@ -54,7 +54,8 @@ export function mixNarration({ video, voice, ambience = null, music = null, clic
   if (ambience) addBed(ambience); if (music) addBed(music); if (click) { inputs.push('-i', click); }
   const clickIdx = click ? idx++ : null;
   // loudnorm works at 192 kHz internally: resample to 48 kHz AFTER it, or the compressor and the mix downstream go silent
-  let fg = `[1:a]aformat=channel_layouts=stereo,loudnorm=I=${voiceLufs}:TP=-1.5:LRA=11,aresample=48000,asplit=${beds.length + 1}[v]` + beds.map((_, i) => `[k${i}]`).join('') + ';';
+  // apad the voice before it keys the compressors: sidechaincompress stops when its KEY ends, which cut the bed off at the last word
+  let fg = `[1:a]aformat=channel_layouts=stereo,loudnorm=I=${voiceLufs}:TP=-1.5:LRA=11,aresample=48000,apad,asplit=${beds.length + 1}[v]` + beds.map((_, i) => `[k${i}]`).join('') + ';';
   beds.forEach((b, i) => { fg += `[${b}:a]aformat=channel_layouts=stereo,loudnorm=I=${bedLufs}:TP=-2:LRA=7,aresample=48000[bd${i}];[bd${i}][k${i}]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[b${i}];`; labels.push(`[b${i}]`); });
   if (clickIdx !== null) { fg += `[${clickIdx}:a]aresample=48000,aformat=channel_layouts=stereo,apad[c];`; labels.push('[c]'); }
   fg += `[v]${labels.join('')}amix=inputs=${1 + labels.length}:normalize=0:duration=longest[a]`;

@@ -29,7 +29,7 @@ test('Belvedere fixture: a dry merge of the committed manifest reproduces it exa
 });
 
 // ---- ffmpeg helpers (C2), exercised on a synthetic 1 s test-pattern clip ----
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { ffprobe, encodeH264, posterFrom, frameAt, ssim, cropCentre16x9, squashTo16x9, reviewStrip } from '../tools/media-lib.mjs';
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ml-video-'));
 const synth = path.join(tmp, 'synth.mp4');   // 1 s, 10 fps, 320x180 test pattern (deterministic)
@@ -74,4 +74,11 @@ test('tightenPauses: caps every mid-speech pause at maxPauseS, trims the head an
   const r = tightenPauses(gappy, tight, { maxPauseS: 0.3, leadInMs: 200 });
   assert.ok(hasAudio(tight)); assert.ok(Math.abs(ffprobeDuration(tight) - 2.7) < 0.12, 'duration ' + ffprobeDuration(tight) + ' ≈ 0.2 lead + 0.05 head + 1 + 0.3 + 1 + 0.15 tail');
   assert.equal(r.pauses.length, 1); assert.ok(Math.abs(r.pauses[0] - 1.2) < 0.1, 'the 1.2 s gap was found: ' + r.pauses[0]); assert.ok(Math.abs(r.removedS - 2.0) < 0.12, 'removed 0.45 head + 0.9 mid + 0.65 tail: ' + r.removedS);
+});
+test('mixNarration: the bed survives the end of a voice shorter than the video (the compressor key is padded)', () => {
+  const short = path.join(tmp, 'voice-short.wav'), out = path.join(tmp, 'narrated-short.mp4');
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=0.4:sample_rate=48000', short]);
+  mixNarration({ video: synth, voice: short, ambience: bed, out });
+  const tail = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-ss', '0.7', '-to', '1', '-i', out, '-af', 'astats=measure_overall=RMS_level:measure_perchannel=none', '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+  const m = String(tail).match(/RMS level dB: (-?[0-9.]+)/); assert.ok(m && +m[1] > -45, 'ambience still audible after the voice ends: ' + (m && m[1]));
 });

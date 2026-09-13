@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-13",
+  "engine": "text2speech_v2",
+  "variant": "elevenlabs",
+  "voice_type": "preset",
+  "voice_id": "30fc8796-ceb6-4a66-b3a7-4a145ef7f346",
+  "voice_name": "Arthur",
+  "takes": {
+    "elevenlabs-arthur": {
+      "job": "87a96867-146f-4d1f-b542-66d105656108",
+      "durationS": 11.15,
+      "lufs": -15.3,
+      "format": "mp3 44.1k mono",
+      "words": 31
+    },
+    "seed-audio": {
+      "job": "cfc9c9d0-115b-4494-b6bb-10441db746fa",
+      "durationS": 16.88,
+      "tightenedS": 11.9,
+      "lufs": -13.4,
+      "format": "wav 48k stereo",
+      "words": 31,
+      "note": "~2.7 s silences inserted at the colon and full stops"
+    }
+  },
+  "owner": "picked ElevenLabs Arthur by ear (even pacing, no inserted pauses)",
+  "lengthRule": "31 words ~ 11 s at a natural pace in both engines; clips go to 10 s with a ~27-word script (owner choice)",
+  "exemplarTake": {
+    "job": "b8063ff7-ab20-463d-9db6-9f5f78b61c27",
+    "credits": 0.45,
+    "script": "The stepped-well plaza: descending steps around a pool, in the manner of a traditional stepped well \u2014 a place to sit low, out of the wind.",
+    "words": 25,
+    "rawS": 9.95,
+    "lufs": -15.6,
+    "pauses": [
+      0.748,
+      0.417,
+      0.629
+    ],
+    "tightened": {
+      "maxPauseS": 0.35,
+      "leadInMs": 250,
+      "durationS": 9.43
+    }
+  },
+  "mix": {
+    "video": "kling3_0_turbo-10s.mp4",
+    "ambience": "native Kling Turbo track (-22.3 LUFS raw) normalised to -26 and ducked under speech",
+    "click": "synthClick 60 ms pink burst -20 dB at t=0",
+    "music": "none \u2014 no licensed file supplied",
+    "lufs": -16.7,
+    "durationS": 10.04
+  }
+}

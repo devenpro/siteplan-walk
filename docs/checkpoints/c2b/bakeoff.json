@@ -100,5 +100,44 @@
     "aPad": 0.378,
     "audio": true,
     "ambienceLufs": -34.5
+  },
+  "_decision": {
+    "date": "2026-09-13",
+    "pick": "kling3_0_turbo",
+    "rule": "among fidelity passes rank by motion; Wan scored highest but its index is inflated by an overshooting push (ends at the pool edge) and it crops the 3:2 postcard; Kling Turbo passes fidelity at the lowest cost, keeps the 3:2 frame and carries the loudest native ambience",
+    "owner": "confirmed Kling 3.0 Turbo via AskUserQuestion; Gemini failed fidelity; Seedance 2.5 faithful but 4x cost and ~18 min per clip",
+    "scaleUpEstimateCredits": {
+      "kling3_0_turbo_13x8s": 156,
+      "wan3_0_13x8s": 182,
+      "seedance_2_5_13x8s": 676,
+      "ttsPerClip": 1
+    }
+  },
+  "kling3_0_turbo_10s": {
+    "credits": 15,
+    "duration": 10.04,
+    "width": 1172,
+    "height": 784,
+    "fps": 24,
+    "bytesRaw": 17900896,
+    "motionIndex": 0.3838,
+    "motionSteps": [
+      0.3952,
+      0.408,
+      0.402,
+      0.3975,
+      0.3896,
+      0.3755,
+      0.3709,
+      0.3617,
+      0.3538
+    ],
+    "aspect": "squash",
+    "aCrop": 0.487,
+    "aSquash": 0.936,
+    "aPad": 0.415,
+    "audio": true,
+    "ambienceLufs": -22.3,
+    "note": "the exemplar clip (job 1debbc7c-7c5b-4af6-88d5-0a952f53092a): prompt = bake-off prompt with \"over ten seconds\"; fidelity PASS; the push travels further than the 8 s take (couple by the pool leaves the bottom edge by 9.9 s) \u2014 batch prompt should say \"about two metres\""
   }
 }
