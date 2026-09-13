@@ -258,5 +258,65 @@
       "crf": 23
     },
     "date": "2026-09-13"
+  },
+  {
+    "id": "stepped-well-plaza",
+    "kind": "ai-video",
+    "file": "ai-stepped-well-plaza.mp4",
+    "poster": "ai-stepped-well-plaza-poster.jpg",
+    "jobId": "1debbc7c-7c5b-4af6-88d5-0a952f53092a",
+    "model": "kling3_0_turbo (Kling 3.0 Turbo), served via Higgsfield",
+    "settings": {
+      "duration": 10,
+      "resolution": "720p",
+      "aspect_ratio": "16:9 requested — output kept the reference's 3:2 (1172x784)",
+      "count": 1,
+      "start_image": "the postcard ai-<id>.jpg (media 419cf3ec-33f0-4439-b243-e6ae34ffe75e)",
+      "creditsPerClip": 15,
+      "nativeAudio": "present (used as the ambience bed)"
+    },
+    "prompt": "Slow cinematic push-in: from this exact viewpoint the camera glides forward about three metres over ten seconds, keeping the horizon level. Ripples spread across the pool and its reflections shimmer; the palms and planting sway in a light breeze; the two people on the steps turn to each other and talk; the couple by the pool gestures gently. Soft afternoon light, constant exposure. Keep every building, tree, path and line where it is; no new buildings, text, signs or logos. Natural ambient sound only: water, birds, a light breeze; no music, no speech.",
+    "measures": {
+      "motionIndex": 0.3838,
+      "motionBaselineC2Loop": 0.0027,
+      "width": 1172,
+      "height": 784,
+      "fps": 24,
+      "durationRaw": 10.04,
+      "bytesRaw": 17900896,
+      "aspect": "kept 3:2 — no crop, no squash",
+      "ambienceLufsRaw": -22.3,
+      "fidelity": "PASS — steps, pool, pergolas, towers, people intact; push travels a little beyond three metres by the end",
+      "bakeoff": "docs/checkpoints/c2b/bakeoff.json"
+    },
+    "audio": true,
+    "narration": "The stepped-well plaza: descending steps around a pool, in the manner of a traditional stepped well — a place to sit low, out of the wind.",
+    "voice": {
+      "engine": "text2speech_v2",
+      "variant": "elevenlabs",
+      "voice": "Arthur (preset 30fc8796-ceb6-4a66-b3a7-4a145ef7f346)",
+      "job": "b8063ff7-ab20-463d-9db6-9f5f78b61c27",
+      "credits": 0.45,
+      "rawS": 9.95,
+      "tightened": {
+        "maxPauseS": 0.35,
+        "leadInMs": 250,
+        "durationS": 9.43
+      },
+      "source": "the vetted caption in site.json, rephrased to 25 words; no model-authored facts"
+    },
+    "mix": {
+      "voiceLufs": -16,
+      "bedLufs": -26,
+      "duck": "sidechaincompress threshold 0.03 ratio 8 attack 20 ms release 400 ms",
+      "click": "synthClick 60 ms pink burst -20 dB at t=0",
+      "music": "none (no licensed file supplied)",
+      "outLufs": -16.7
+    },
+    "encode": {
+      "bytes": 3683803,
+      "crf": 23
+    },
+    "date": "2026-09-13"
   }
 ]

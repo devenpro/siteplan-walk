@@ -1,6 +1,7 @@
 // Live checks for a deployed/served viewer. usage: node tools/check.mjs <viewer url with ?project=… or a deployed project url>
 import { chromium } from 'playwright';
-import { RANK } from '../viewer/media-kinds.js';
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import { RANK } from '../viewer/media-kinds.js'; import { hasAudio } from './media-lib.mjs';
 const url = process.argv[2]; if (!url) { console.error('usage: node tools/check.mjs <url>'); process.exit(2); }
 const results = []; const ok = (name, pass, info = '') => { results.push({ name, pass, info }); console.log((pass ? 'PASS' : 'FAIL') + '  ' + name + (info ? '  — ' + info : '')); };
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -34,14 +35,16 @@ if (state) {
   for (const f of files) { const r = await p.request.get(base + 'postcards/' + f); const len = +(r.headers()['content-length'] || 0); if (!r.ok() || (len && len < 2000)) { bad++; console.log('   bad file', f, r.status(), len); } }
   ok('every media file of every hotspot loads (200, >2 KB)', bad === 0, 'checked ' + files.length);
   ok('hero order follows ruling 4 (provenance first) on every hotspot', state.media.every(m => m.kinds.every((k, i) => i === 0 || (RANK[k] ?? 99) >= (RANK[m.kinds[i - 1]] ?? 99))), JSON.stringify(state.media.filter(m => m.kinds.length > 1).slice(0, 3)));
-  // ---- AI loops (C2): data shape, delivery + decode, and both sides of the autoplay gate (this context has reduced motion; a plain one is opened later) ----
-  const loops = await p.evaluate(() => window.__walk.hotspots.flatMap(h => h.images.filter(e => e.kind === 'ai-video').map(e => ({ id: h.id, ...e }))));
-  ok('AI loops: every ai-video entry has file + poster + ≈5 s + size + loop:true + the indicative credit', loops.length >= 1 && loops.every(e => e.file && e.poster && e.duration >= 4 && e.duration <= 6 && e.width >= 1200 && e.loop === true && /indicative/.test(e.credit)), JSON.stringify(loops.map(e => [e.id, e.file, e.duration, e.width + 'x' + e.height])));
-  let rangeOk = true, decodeOk = true; const decodes = [];
-  for (const e of loops) { const h = await p.request.head(base + 'postcards/' + e.file); if (!/bytes/.test(h.headers()['accept-ranges'] || '')) rangeOk = false;
-    const d = await p.evaluate(src => new Promise(r => { const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.src = src; v.addEventListener('loadedmetadata', () => r({ duration: v.duration, w: v.videoWidth })); v.addEventListener('error', () => r(null)); setTimeout(() => r(null), 20000); }), base + 'postcards/' + e.file); decodes.push(d); if (!d || d.duration < 4 || d.w < 1200) decodeOk = false; }
-  const wantRange = /^https:/.test(url);   // Range is a property of the live host (nginx); the python dev server never sends it
-  ok(`loop files decode in the browser (loadedmetadata, ≈5 s, ≥1280 wide)${wantRange ? ' and are served with Accept-Ranges' : ''}`, decodeOk && (!wantRange || rangeOk), JSON.stringify({ rangeOk, decodeOk, decodes }));
+  // ---- AI clips (C2 loops + C2b narrated): data shape, delivery + decode (+ an audio stream on narrated files, probed with ffprobe), and both sides of the autoplay gate (this context has reduced motion; a plain one is opened later) ----
+  const clips = await p.evaluate(() => window.__walk.hotspots.flatMap(h => h.images.filter(e => e.kind === 'ai-video').map(e => ({ id: h.id, ...e }))));
+  const isLoop = e => e.loop !== false, isNarrated = e => e.loop === false;
+  ok('AI clips: every ai-video entry has file + poster + size + the indicative credit; loops ≈5 s + loop:true; narrated clips 8–12 s + loop:false + audio:true + narration text', clips.length >= 1 && clips.some(isNarrated) && clips.every(e => e.file && e.poster && e.width >= 1200 && /indicative/.test(e.credit) && (isLoop(e) ? (e.duration >= 4 && e.duration <= 6 && e.loop === true && !e.audio) : (e.duration >= 8 && e.duration <= 12 && e.audio === true && typeof e.narration === 'string' && e.narration.length > 20 && /legend/.test(e.credit)))), JSON.stringify(clips.map(e => [e.id, e.file, e.duration, e.width + 'x' + e.height, isNarrated(e) ? 'narrated' : 'loop'])));
+  let rangeOk = true, decodeOk = true, audioOk = true; const decodes = [], audios = [];
+  for (const e of clips) { const h = await p.request.head(base + 'postcards/' + e.file); if (!/bytes/.test(h.headers()['accept-ranges'] || '')) rangeOk = false;
+    const d = await p.evaluate(src => new Promise(r => { const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.src = src; v.addEventListener('loadedmetadata', () => r({ duration: v.duration, w: v.videoWidth })); v.addEventListener('error', () => r(null)); setTimeout(() => r(null), 20000); }), base + 'postcards/' + e.file); decodes.push(d); if (!d || d.duration < 4 || d.w < 1200) decodeOk = false;
+    if (isNarrated(e)) { const f = path.join(os.tmpdir(), 'check-' + e.file); fs.writeFileSync(f, await (await p.request.get(base + 'postcards/' + e.file)).body()); const a = hasAudio(f); audios.push([e.file, a, fs.statSync(f).size]); if (!a || fs.statSync(f).size > 4e6) audioOk = false; fs.unlinkSync(f); } }
+  const wantRange = /^https:/.test(url);   // Range is a property of the live host (nginx); the python dev server never sends it (tools/serve.mjs does)
+  ok(`clip files decode in the browser (loadedmetadata, ≥4 s, ≥1280 wide); narrated files carry an audio stream (ffprobe on the downloaded bytes) and stay ≤ 4 MB${wantRange ? '; served with Accept-Ranges' : ''}`, decodeOk && audioOk && (!wantRange || rangeOk), JSON.stringify({ rangeOk, decodeOk, decodes, audios }));
   const gateNo = await p.evaluate(async () => { const w = window.__walk; const h = w.hotspots.find(x => x.images.some(e => e.kind === 'ai-video')); if (!h) return { skipped: true }; w.select(h.id, false); await new Promise(r => setTimeout(r, 2500)); const v = document.querySelector('#dStrip .slide.active video'); const out = { id: h.id, playing: w.gallery.playing, btn: v ? !v.parentElement.querySelector('.playbtn').hidden : null, hasSrc: v ? !!v.getAttribute('src') : null }; w.deselect(); return out; });
   ok('autoplay gate: under prefers-reduced-motion the loop stays on its poster with a play button', gateNo.skipped || (gateNo.playing === false && gateNo.btn === true), JSON.stringify(gateNo));
   // interaction 1: click a pin at the overview (all pins are in the frustum here)
@@ -106,7 +109,7 @@ for (const tier of ['low', 'mid', 'high']) {
   ok(`tier ${tier} draw budget (≤${CEIL[tier][0]} calls, ≤${CEIL[tier][1]} tris)`, !!f && f.stats.calls > 0 && f.stats.calls <= CEIL[tier][0] && f.stats.triangles <= CEIL[tier][1], f ? JSON.stringify(f.stats) : 'no facts');
 }
 // ---- autoplay in a plain context (no reduced motion): the loop must actually advance, moving on must release its decoder, deselect must clear the strip ----
-let gateYes = null;
+let gateYes = null, narrated = null;
 { const ctx2 = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p2 = await ctx2.newPage(); wire(p2);
   const u2 = new URL(url); u2.searchParams.set('autostart', '800'); u2.searchParams.set('q', 'low');
   const r2 = await p2.goto(u2.toString(), { waitUntil: 'networkidle', timeout: 120000 }); const booted2 = await p2.waitForFunction(() => !!window.__walk, null, { timeout: 180000 }).then(() => true).catch(() => false); await p2.waitForTimeout(3000);
@@ -114,8 +117,18 @@ let gateYes = null;
     const v = document.querySelector('#dStrip .slide.active video'); const t0 = Date.now(); while (!(v && v.currentTime > 0.2) && Date.now() - t0 < 20000) await new Promise(r => setTimeout(r, 250));
     const t = v ? +v.currentTime.toFixed(2) : -1, playing = w.gallery.playing; w.gallery.go(1); await new Promise(r => setTimeout(r, 700)); const srcAfterGo = v ? !!v.getAttribute('src') : null; w.deselect();
     return { id: h.id, playing, currentTime: t, waitedMs: Date.now() - t0, srcAfterGo, stripEmpty: document.getElementById('dStrip').children.length === 0 }; }) : { failed: true };
+  // C2b narrated clip: plays muted with Listen showing and loop off; seeking to the end → ended, held on the last frame (paused), Replay shown; Replay restarts; Listen unmutes + restarts; moving on mutes again
+  narrated = r2 && r2.status() === 200 && booted2 ? await p2.evaluate(async () => { const sleep = ms => new Promise(r => setTimeout(r, ms)); const w = window.__walk; const h = w.hotspots.find(x => x.images.some(e => e.kind === 'ai-video' && e.loop === false)); if (!h) return { skipped: true }; w.select(h.id, false);
+    const v = document.querySelector('#dStrip .slide.active video'); const li = v && v.parentElement.querySelector('.listenbtn'), re = v && v.parentElement.querySelector('.replaybtn'); if (!v || !li || !re) return { id: h.id, missing: { v: !!v, li: !!li, re: !!re } };
+    let t0 = Date.now(); while (!(v.currentTime > 0.2) && Date.now() - t0 < 20000) await sleep(250);
+    const a = { id: h.id, vLoop: v.loop, muted: v.muted, playing: w.gallery.playing, listenShown: !li.hidden && li.textContent === 'Listen', replayHidden: re.hidden, seekable: v.seekable.length ? +v.seekable.end(0).toFixed(1) : 0 };
+    v.currentTime = v.duration - 0.05; t0 = Date.now(); while (!v.ended && Date.now() - t0 < 15000) await sleep(100);
+    a.ended = v.ended; a.heldPaused = v.paused; a.replayShown = !re.hidden; a.playingAfterEnd = w.gallery.playing;
+    re.click(); t0 = Date.now(); while (!(v.currentTime > 0.05 && v.currentTime < 3 && !v.paused) && Date.now() - t0 < 10000) await sleep(100); a.replayed = !v.paused && v.currentTime < 3; a.replayHiddenAgain = re.hidden;
+    li.click(); await sleep(300); a.listen = { muted: v.muted, restarted: v.currentTime < 1.5, label: li.textContent }; w.gallery.go(1); await sleep(700); a.afterGo = { muted: v.muted, label: li.textContent }; w.deselect(); return a; }) : { failed: true };
   await ctx2.close(); }
 ok('autoplay: in a plain context the loop plays muted inline (currentTime advances within 20 s), moving on releases its decoder, deselect clears the strip', !!gateYes && (gateYes.skipped || (gateYes.playing && gateYes.currentTime > 0.2 && gateYes.srcAfterGo === false && gateYes.stripEmpty)), JSON.stringify(gateYes));
+ok('narrated clip: plays muted with Listen, loop off; end → held on the last frame with Replay; Replay restarts; Listen unmutes + restarts; moving on mutes again', !!narrated && (narrated.skipped || (narrated.vLoop === false && narrated.muted && narrated.listenShown && narrated.replayHidden && narrated.ended && narrated.heldPaused && narrated.replayShown && narrated.playingAfterEnd === false && narrated.replayed && narrated.replayHiddenAgain && narrated.listen.muted === false && narrated.listen.restarted && narrated.listen.label === 'Mute' && narrated.afterGo.muted && narrated.afterGo.label === 'Listen')), JSON.stringify(narrated));
 ok('GTAO changes the high-tier frame (A/B: AO pass on vs off — > 1 % of pixels move by > 6 levels, mean |Δ| < 40)', !!aoDiff && aoDiff.changed > 0.01 && aoDiff.meanAbsDiff < 40, JSON.stringify(aoDiff));
 ok('no shader compile errors on any tier', !errs.some(e => /Shader Error|WebGLProgram|WebGLShader|GLSL/i.test(e)), errs.filter(e => /Shader|GLSL/i.test(e)).slice(0, 3).join(' | '));
 ok('zero console errors / failed requests', errs.length === 0, errs.slice(0, 5).join(' | '));

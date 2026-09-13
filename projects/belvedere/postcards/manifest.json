@@ -199,13 +199,15 @@
         "file": "ai-stepped-well-plaza.mp4",
         "poster": "ai-stepped-well-plaza-poster.jpg",
         "kind": "ai-video",
-        "duration": 5,
+        "duration": 10.06,
         "width": 1280,
         "height": 856,
-        "loop": true,
+        "loop": false,
         "from": "ai-stepped-well-plaza.jpg",
-        "jobId": "2e621da9-214e-426a-b4b8-91d7d4b2380d",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer video"
+        "jobId": "1debbc7c-7c5b-4af6-88d5-0a952f53092a",
+        "credit": "AI visualisation via Higgsfield · indicative, not a developer video · narration from the published legend and public facts",
+        "audio": true,
+        "narration": "The stepped-well plaza: descending steps around a pool, in the manner of a traditional stepped well — a place to sit low, out of the wind."
       },
       {
         "file": "ai-stepped-well-plaza.jpg",

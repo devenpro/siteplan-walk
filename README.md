@@ -10,7 +10,7 @@ Live: **https://walk.csoul.cloud/belvedere/** · hub: https://walk.csoul.cloud/
 - Towers are massing extruded from traced footprints at true floor count, dressed with a facade rhythm (paired fins, balcony bands, stepped crown) read from the developer's published render, not the architect's drawings. Phase 2 blocks are ghosts with a faint rhythm.
 - Courts, rink, stepped well, plazas, portal and domes are simple 3D read off the plan. Trees, hedges and lawn are read from the plan's own greens at load time (dark greens → lobed trees, thin dark strips → hedges, light greens → a lawn tint); the pool surfaces are procedural ripples. Nothing is planted that the plan does not draw.
 - An AI photoreal ground was tried and rejected (Nano Banana Pro, two generations, 2026-09-13): measured against the traced plan, the best attempt still moved 5 of 67 edges by more than 6 px (up to 9 px ≈ 3 m), turned the rink and splash pad into swimming pools, and the second rendered the plan's labels into the photo. The plan stays the ground. Method and numbers: `projects/belvedere/source/ai-ground-log.json`, `docs/checkpoints/b5/`.
-- Every postcard is labelled with its provenance — **developer video**, **developer render**, **developer video · YouTube** (official channel only, loaded on tap), **AI loop · indicative**, **AI visualisation · indicative**, **plan detail** — and galleries always lead with the most trustworthy source (video before still). AI loops (Kling 3.0, 5 s, silent) are made from the AI postcards with the same first and last frame, measured for a closed seam, and play muted inline — autoplay only when the tab is visible, reduced motion and data saving are off, and no tour is running; otherwise a poster and a play button. Nothing is invented beyond the plan's legend and the developer's public facts.
+- Every postcard is labelled with its provenance — **developer video**, **developer render**, **developer video · YouTube** (official channel only, loaded on tap), **AI clip · indicative**, **AI visualisation · indicative**, **plan detail** — and galleries always lead with the most trustworthy source (video before still). AI clips (Kling 3.0 Turbo, 10 s, measured for visible motion) are made from the AI postcards and narrated by text-to-speech from the hotspot's own vetted caption over the clip's native ambience; they play muted inline — autoplay only when the tab is visible, reduced motion and data saving are off, and no tour is running; otherwise a poster and a play button — play once, hold the last frame with Replay, and a Listen button turns the sound on. Nothing is invented beyond the plan's legend and the developer's public facts.
 
 ## Layout
 
@@ -26,7 +26,7 @@ tests/             node --test unit tests for the pure viewer modules (quality.j
 
 ```bash
 # local dev server (viewer + tracer read from ../projects/<slug>/)
-python3 -m http.server 8765 --directory .
+python3 -m http.server 8765 --directory .          # or: node tools/serve.mjs 8766   (byte ranges — needed for <video> seeking / the narrated-clip check)
 #   viewer:  http://127.0.0.1:8765/viewer/index.html?project=../projects/belvedere/
 #   tracer:  http://127.0.0.1:8765/tools/trace.html?json=../projects/belvedere/site.json
 

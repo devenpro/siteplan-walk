@@ -1,4 +1,5 @@
 // Postcard gallery (C1): a scroll-snap strip of media entries per hotspot with dots, hover arrows, ←/→ and an IntersectionObserver-driven active index.
+// C2 video lifecycle (one decoder, autoplay gate) · C2b narrated clips (loop:false → hold + Replay; audio → Listen/Mute).
 // renderMedia() is the one place a manifest entry becomes DOM; the strip and (C4) fullscreen both use it.
 import { labelOf, sortByRank, isVideoKind } from './media-kinds.js';
 
@@ -14,6 +15,15 @@ export function renderMedia(entry, hotspot, base) {
     const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'none'; v.poster = base + 'postcards/' + entry.poster; v.dataset.src = base + 'postcards/' + entry.file;
     v.loop = entry.loop !== false; if (entry.kind === 'video') v.controls = true; v.setAttribute('aria-label', alt); wrap.appendChild(v);
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'playbtn'; btn.hidden = true; btn.setAttribute('aria-label', 'Play'); btn.addEventListener('click', () => v.play().then(() => { btn.hidden = true; }).catch(() => {})); wrap.appendChild(btn);
+    if (!v.loop) {   // C2b narrated clip: play once, hold the last frame, offer Replay; a restart keeps whatever mute state the visitor chose
+      const re = document.createElement('button'); re.type = 'button'; re.className = 'replaybtn'; re.hidden = true; re.setAttribute('aria-label', 'Replay'); re.textContent = '↻';
+      re.addEventListener('click', () => { v.currentTime = 0; v.play().catch(() => {}); }); v.addEventListener('ended', () => { re.hidden = false; }); v.addEventListener('play', () => { re.hidden = true; }); wrap.appendChild(re);
+    }
+    if (entry.audio) {   // Listen: unmute + restart from the first word (the tap is the user gesture every browser needs for sound); Mute puts it back
+      const li = document.createElement('button'); li.type = 'button'; li.className = 'listenbtn'; li.setAttribute('aria-pressed', 'false'); li.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="w" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Listen</span>';
+      li.addEventListener('click', () => { const on = v.muted; v.muted = !on; li.setAttribute('aria-pressed', String(on)); li.lastChild.textContent = on ? 'Mute' : 'Listen'; if (on) { v.currentTime = 0; v.play().catch(() => {}); } });
+      wrap.appendChild(li);
+    }
     return wrap;
   }
   const im = document.createElement('img'); im.className = 'media'; im.loading = 'lazy'; im.decoding = 'async'; im.src = base + 'postcards/' + entry.file; im.alt = alt; return im;
@@ -25,7 +35,9 @@ export function createGallery({ strip, dots, prev, next, badge, credit, base, ca
   // ---- video lifecycle (C2): src only on the active slide (one decoder), autoplay behind the gate, poster + play button on refusal, pause when hidden ----
   const gate = () => document.visibilityState === 'visible' && !reduced.matches && !(navigator.connection && navigator.connection.saveData) && canAutoplay();
   const videoOf = i => strip.children[i] && strip.children[i].querySelector('video');
-  const deactivate = v => { if (!v) return; v.pause(); if (v.getAttribute('src')) { v.removeAttribute('src'); v.load(); } const b = v.parentElement.querySelector('.playbtn'); if (b) b.hidden = true; };
+  const deactivate = v => { if (!v) return; v.pause(); if (v.getAttribute('src')) { v.removeAttribute('src'); v.load(); } const b = v.parentElement.querySelector('.playbtn'); if (b) b.hidden = true;
+    const re = v.parentElement.querySelector('.replaybtn'); if (re) re.hidden = true;
+    const li = v.parentElement.querySelector('.listenbtn'); if (li) { v.muted = true; li.setAttribute('aria-pressed', 'false'); li.lastChild.textContent = 'Listen'; } };   // sound never carries over to the next slide or hotspot
   const activate = v => { if (!v) return; if (!v.getAttribute('src')) v.src = v.dataset.src; const b = v.parentElement.querySelector('.playbtn');
     if (gate()) v.play().then(() => { b.hidden = true; }).catch(() => { b.hidden = false; }); else b.hidden = false; };
   document.addEventListener('visibilitychange', () => { const v = videoOf(index); if (!v) return; if (document.hidden) v.pause(); else if (gate() && v.getAttribute('src')) v.play().catch(() => {}); });
