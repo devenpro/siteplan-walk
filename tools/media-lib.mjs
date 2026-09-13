@@ -62,3 +62,25 @@ export function mixNarration({ video, voice, ambience = null, music = null, clic
   run('ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', fg, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '96k', '-ar', '48000', '-ac', '2', '-t', String(ffprobe(video).duration), '-movflags', '+faststart', out]);
   return { lufs: loudness(out), duration: ffprobe(out).duration, bytes: fs.statSync(out).size };
 }
+// silences from silencedetect: [{ start, end }] in seconds (a silence still open at the end of the file gets end = duration)
+export function silences(file, { thresholdDb = -40, minS = 0.3 } = {}) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', file, '-af', `silencedetect=n=${thresholdDb}dB:d=${minS}`, '-f', 'null', '-'], { encoding: 'utf8' });
+  const out = [], dur = ffprobe(file).duration; let open = null;
+  for (const m of String(r.stderr).matchAll(/silence_(start|end): (-?[0-9.]+)/g)) { if (m[1] === 'start') open = +m[2]; else if (open !== null) { out.push({ start: open, end: +m[2] }); open = null; } }
+  if (open !== null) out.push({ start: open, end: dur }); return out;
+}
+// TTS engines pause long at punctuation; cap every mid-speech pause at maxPauseS, trim the head and tail to a short breath, and add a lead-in so a click can land before the first word.
+export function tightenPauses(src, dst, { maxPauseS = 0.35, thresholdDb = -40, minS = 0.3, leadInMs = 250, tailS = 0.15 } = {}) {
+  const dur = ffprobe(src).duration, sil = silences(src, { thresholdDb, minS }), keep = []; let t = 0, removedS = 0; const pauses = [];
+  for (const s of sil) {
+    const head = s.start <= 0.01, tail = s.end >= dur - 0.01, len = s.end - s.start;
+    if (head) { keep.push(null); t = Math.max(0, s.end - 0.05); removedS += t; continue; }           // head: keep 50 ms
+    if (tail) { keep.push([t, Math.min(dur, s.start + tailS)]); removedS += dur - Math.min(dur, s.start + tailS); t = dur; continue; }
+    pauses.push(+len.toFixed(3)); if (len <= maxPauseS) continue;
+    keep.push([t, s.start + maxPauseS]); removedS += len - maxPauseS; t = s.end;
+  }
+  if (t < dur) keep.push([t, dur]);
+  const segs = keep.filter(Boolean), fg = segs.map((k, i) => `[0:a]atrim=${k[0]}:${k[1]},asetpts=PTS-STARTPTS[s${i}]`).join(';') + ';' + segs.map((_, i) => `[s${i}]`).join('') + `concat=n=${segs.length}:v=0:a=1,adelay=${leadInMs}|${leadInMs},aresample=48000[a]`;
+  run('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-filter_complex', fg, '-map', '[a]', '-ac', '2', '-ar', '48000', dst]);
+  return { pauses, removedS: +removedS.toFixed(3), duration: ffprobe(dst).duration };
+}

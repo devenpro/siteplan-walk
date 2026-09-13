@@ -54,7 +54,7 @@ test('cropCentre16x9 / squashTo16x9 / reviewStrip produce the expected shapes', 
 });
 
 // ---- audio layer (C2b) on synthetic inputs: a tone stands in for speech, quiet pink noise for ambience ----
-import { hasAudio, loudness, synthClick, mixNarration } from '../tools/media-lib.mjs';
+import { hasAudio, loudness, synthClick, mixNarration, tightenPauses } from '../tools/media-lib.mjs';
 const ffprobeDuration = f => +JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'json', f], { encoding: 'utf8' })).format.duration;
 const voice = path.join(tmp, 'voice.wav'), bed = path.join(tmp, 'bed.wav'), click = path.join(tmp, 'click.wav'), narrated = path.join(tmp, 'narrated.mp4');
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=1:sample_rate=48000', voice]);
@@ -67,4 +67,11 @@ test('hasAudio / loudness / synthClick', () => {
 test('mixNarration: muxes voice + ducked bed + click onto the video, normalised near -16 LUFS, audio stream present, duration = video', () => {
   const r = mixNarration({ video: synth, voice, ambience: bed, click, out: narrated });
   assert.ok(hasAudio(narrated)); assert.ok(Math.abs(r.duration - 1) < 0.15); assert.ok(r.lufs > -20 && r.lufs < -12, 'mix LUFS ' + r.lufs); assert.ok(r.bytes > 1000);
+});
+test('tightenPauses: caps every mid-speech pause at maxPauseS, trims the head and tail, adds the lead-in', () => {
+  const gappy = path.join(tmp, 'gappy.wav'), tight = path.join(tmp, 'tight.wav');   // 0.5 s silence · 1 s tone · 1.2 s silence · 1 s tone · 0.8 s silence = 4.5 s
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'aevalsrc=if(between(t\\,0.5\\,1.5)+between(t\\,2.7\\,3.7)\\,0.5*sin(2*PI*220*t)\\,0):s=48000:d=4.5', gappy]);
+  const r = tightenPauses(gappy, tight, { maxPauseS: 0.3, leadInMs: 200 });
+  assert.ok(hasAudio(tight)); assert.ok(Math.abs(ffprobeDuration(tight) - 2.7) < 0.12, 'duration ' + ffprobeDuration(tight) + ' ≈ 0.2 lead + 0.05 head + 1 + 0.3 + 1 + 0.15 tail');
+  assert.equal(r.pauses.length, 1); assert.ok(Math.abs(r.pauses[0] - 1.2) < 0.1, 'the 1.2 s gap was found: ' + r.pauses[0]); assert.ok(Math.abs(r.removedS - 2.0) < 0.12, 'removed 0.45 head + 0.9 mid + 0.65 tail: ' + r.removedS);
 });
