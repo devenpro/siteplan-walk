@@ -5,7 +5,7 @@ const url = process.argv[2]; if (!url) { console.error('usage: node tools/check.
 const results = []; const ok = (name, pass, info = '') => { results.push({ name, pass, info }); console.log((pass ? 'PASS' : 'FAIL') + '  ' + name + (info ? '  — ' + info : '')); };
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage();   // reduced motion: the gallery scrolls instantly (SwiftShader cannot animate a smooth scroll)
-const errs = []; const wire = pg => { pg.on('pageerror', e => errs.push('pageerror: ' + e.message)); pg.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); pg.on('requestfailed', r => errs.push('requestfailed: ' + r.url())); }; wire(p);
+const errs = []; const wire = pg => { pg.on('pageerror', e => errs.push('pageerror: ' + e.message)); pg.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); pg.on('requestfailed', r => { const f = r.failure(); if (f && /ERR_ABORTED/.test(f.errorText)) return; errs.push('requestfailed: ' + r.url()); }); }; wire(p);   // an aborted fetch is not a failure: the gallery cancels a video download when it releases a decoder
 const u = new URL(url); u.searchParams.set('autostart', '800'); u.searchParams.set('q', 'low'); u.searchParams.set('tourSpeed', '60');
 const resp = await p.goto(u.toString(), { waitUntil: 'networkidle', timeout: 90000 }); ok('page loads', !!resp && resp.status() === 200, 'status ' + (resp && resp.status()));
 await p.waitForTimeout(4000);
@@ -34,6 +34,16 @@ if (state) {
   for (const f of files) { const r = await p.request.get(base + 'postcards/' + f); const len = +(r.headers()['content-length'] || 0); if (!r.ok() || (len && len < 2000)) { bad++; console.log('   bad file', f, r.status(), len); } }
   ok('every media file of every hotspot loads (200, >2 KB)', bad === 0, 'checked ' + files.length);
   ok('hero order follows ruling 4 (provenance first) on every hotspot', state.media.every(m => m.kinds.every((k, i) => i === 0 || (RANK[k] ?? 99) >= (RANK[m.kinds[i - 1]] ?? 99))), JSON.stringify(state.media.filter(m => m.kinds.length > 1).slice(0, 3)));
+  // ---- AI loops (C2): data shape, delivery + decode, and both sides of the autoplay gate (this context has reduced motion; a plain one is opened later) ----
+  const loops = await p.evaluate(() => window.__walk.hotspots.flatMap(h => h.images.filter(e => e.kind === 'ai-video').map(e => ({ id: h.id, ...e }))));
+  ok('AI loops: every ai-video entry has file + poster + ≈5 s + size + loop:true + the indicative credit', loops.length >= 1 && loops.every(e => e.file && e.poster && e.duration >= 4 && e.duration <= 6 && e.width >= 1200 && e.loop === true && /indicative/.test(e.credit)), JSON.stringify(loops.map(e => [e.id, e.file, e.duration, e.width + 'x' + e.height])));
+  let rangeOk = true, decodeOk = true; const decodes = [];
+  for (const e of loops) { const h = await p.request.head(base + 'postcards/' + e.file); if (!/bytes/.test(h.headers()['accept-ranges'] || '')) rangeOk = false;
+    const d = await p.evaluate(src => new Promise(r => { const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.src = src; v.addEventListener('loadedmetadata', () => r({ duration: v.duration, w: v.videoWidth })); v.addEventListener('error', () => r(null)); setTimeout(() => r(null), 20000); }), base + 'postcards/' + e.file); decodes.push(d); if (!d || d.duration < 4 || d.w < 1200) decodeOk = false; }
+  const wantRange = /^https:/.test(url);   // Range is a property of the live host (nginx); the python dev server never sends it
+  ok(`loop files decode in the browser (loadedmetadata, ≈5 s, ≥1280 wide)${wantRange ? ' and are served with Accept-Ranges' : ''}`, decodeOk && (!wantRange || rangeOk), JSON.stringify({ rangeOk, decodeOk, decodes }));
+  const gateNo = await p.evaluate(async () => { const w = window.__walk; const h = w.hotspots.find(x => x.images.some(e => e.kind === 'ai-video')); if (!h) return { skipped: true }; w.select(h.id, false); await new Promise(r => setTimeout(r, 2500)); const v = document.querySelector('#dStrip .slide.active video'); const out = { id: h.id, playing: w.gallery.playing, btn: v ? !v.parentElement.querySelector('.playbtn').hidden : null, hasSrc: v ? !!v.getAttribute('src') : null }; w.deselect(); return out; });
+  ok('autoplay gate: under prefers-reduced-motion the loop stays on its poster with a play button', gateNo.skipped || (gateNo.playing === false && gateNo.btn === true), JSON.stringify(gateNo));
   // interaction 1: click a pin at the overview (all pins are in the frustum here)
   await p.click('#labels .pin[data-id="stepped-well-plaza"]'); await p.waitForTimeout(2400);
   const det2 = await p.evaluate(() => ({ name: document.getElementById('dName').textContent, sel: window.__walk.selected, hidden: document.getElementById('panelDetail').hidden }));
@@ -75,10 +85,10 @@ for (const tier of ['mid', 'high']) {
   const t0 = Date.now(); const r = await pg.goto(tu.toString(), { waitUntil: 'networkidle', timeout: 120000 });
   const booted = await pg.waitForFunction(() => !!window.__walk, null, { timeout: 180000 }).then(() => true).catch(() => false); await pg.waitForTimeout(3000);   // boot = top-level awaits + tree planting + (mid) two environment bakes; slow under software GL
   facts[tier] = r && r.status() === 200 && booted ? { ...(await pg.evaluate(tierFacts)), bootMs: Date.now() - t0 } : { failed: { status: r && r.status(), booted, ms: Date.now() - t0 } };
-  if (tier === 'high' && facts.high && !facts.high.failed) {   // A/B: the same frame with the AO pass on, then off — GTAO must change the picture, and only modestly
+  if (tier === 'high' && facts.high && !facts.high.failed) try {   // A/B: the same frame with the AO pass on, then off — GTAO must change the picture, and only modestly (a timeout here is a failed check, not a crash)
     const shotA = await pg.locator('#gl').screenshot({ type: 'png', timeout: 240000 });
     const f0 = await pg.evaluate(() => window.__walk.renderer.info.render.frame);
-    await pg.evaluate(() => { window.__walk.post.enabled = false; }); await pg.waitForFunction(f0 => window.__walk.renderer.info.render.frame >= f0 + 2, f0, { timeout: 120000 });
+    await pg.evaluate(() => { window.__walk.post.enabled = false; }); await pg.waitForFunction(f0 => window.__walk.renderer.info.render.frame >= f0 + 2, f0, { timeout: 240000 });
     const shotB = await pg.locator('#gl').screenshot({ type: 'png', timeout: 240000 });
     aoDiff = await pg.evaluate(async ([a, b]) => { const load = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.src = src; }); const A = await load(a), B = await load(b);
       const W = Math.min(A.width, B.width), H = Math.min(A.height, B.height), cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
@@ -86,7 +96,7 @@ for (const tier of ['mid', 'high']) {
       let sum = 0, changed = 0; for (let i = 0; i < da.length; i += 4) { const d0 = Math.abs(da[i] - db[i]), d1 = Math.abs(da[i + 1] - db[i + 1]), d2 = Math.abs(da[i + 2] - db[i + 2]); sum += d0 + d1 + d2; if (Math.max(d0, d1, d2) > 6) changed++; }
       // changed = share of pixels moved by > 6 levels: framing-independent, 0 when the pass is stuck on
       return { meanAbsDiff: +(sum / (da.length / 4 * 3)).toFixed(2), changed: +(changed / (da.length / 4)).toFixed(4), w: W, h: H }; }, ['data:image/png;base64,' + shotA.toString('base64'), 'data:image/png;base64,' + shotB.toString('base64')]);
-  }
+  } catch (e) { aoDiff = { error: String(e.message || e).slice(0, 120) }; }
   await pg.close();
 }
 for (const tier of ['low', 'mid', 'high']) {
@@ -95,6 +105,17 @@ for (const tier of ['low', 'mid', 'high']) {
     !!f && f.quality === tier && f.env === WANT_ENV[tier] && f.logDepth === WANT_LOG[tier] && f.post === WANT_POST[tier] && f.shadowMapSize === [4096, 2048, 1024][['high', 'mid', 'low'].indexOf(tier)] && f.clearAlpha === 1 && f.plinthTopY === -0.3 && !!f.greenery && f.greenery.hedges >= 100 && f.greenery.variants === WANT_G[tier].variants && f.greenery.lawn === WANT_G[tier].lawn && f.greenery.water === WANT_G[tier].water, f ? JSON.stringify(f) : why);
   ok(`tier ${tier} draw budget (≤${CEIL[tier][0]} calls, ≤${CEIL[tier][1]} tris)`, !!f && f.stats.calls > 0 && f.stats.calls <= CEIL[tier][0] && f.stats.triangles <= CEIL[tier][1], f ? JSON.stringify(f.stats) : 'no facts');
 }
+// ---- autoplay in a plain context (no reduced motion): the loop must actually advance, moving on must release its decoder, deselect must clear the strip ----
+let gateYes = null;
+{ const ctx2 = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p2 = await ctx2.newPage(); wire(p2);
+  const u2 = new URL(url); u2.searchParams.set('autostart', '800'); u2.searchParams.set('q', 'low');
+  const r2 = await p2.goto(u2.toString(), { waitUntil: 'networkidle', timeout: 120000 }); const booted2 = await p2.waitForFunction(() => !!window.__walk, null, { timeout: 180000 }).then(() => true).catch(() => false); await p2.waitForTimeout(3000);
+  gateYes = r2 && r2.status() === 200 && booted2 ? await p2.evaluate(async () => { const w = window.__walk; const h = w.hotspots.find(x => x.images.some(e => e.kind === 'ai-video')); if (!h) return { skipped: true }; w.select(h.id, false);
+    const v = document.querySelector('#dStrip .slide.active video'); const t0 = Date.now(); while (!(v && v.currentTime > 0.2) && Date.now() - t0 < 20000) await new Promise(r => setTimeout(r, 250));
+    const t = v ? +v.currentTime.toFixed(2) : -1, playing = w.gallery.playing; w.gallery.go(1); await new Promise(r => setTimeout(r, 700)); const srcAfterGo = v ? !!v.getAttribute('src') : null; w.deselect();
+    return { id: h.id, playing, currentTime: t, waitedMs: Date.now() - t0, srcAfterGo, stripEmpty: document.getElementById('dStrip').children.length === 0 }; }) : { failed: true };
+  await ctx2.close(); }
+ok('autoplay: in a plain context the loop plays muted inline (currentTime advances within 20 s), moving on releases its decoder, deselect clears the strip', !!gateYes && (gateYes.skipped || (gateYes.playing && gateYes.currentTime > 0.2 && gateYes.srcAfterGo === false && gateYes.stripEmpty)), JSON.stringify(gateYes));
 ok('GTAO changes the high-tier frame (A/B: AO pass on vs off — > 1 % of pixels move by > 6 levels, mean |Δ| < 40)', !!aoDiff && aoDiff.changed > 0.01 && aoDiff.meanAbsDiff < 40, JSON.stringify(aoDiff));
 ok('no shader compile errors on any tier', !errs.some(e => /Shader Error|WebGLProgram|WebGLShader|GLSL/i.test(e)), errs.filter(e => /Shader|GLSL/i.test(e)).slice(0, 3).join(' | '));
 ok('zero console errors / failed requests', errs.length === 0, errs.slice(0, 5).join(' | '));
