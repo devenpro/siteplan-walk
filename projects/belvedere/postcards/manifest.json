@@ -148,7 +148,7 @@
       {
         "file": "ai-entrance-portal.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-entrance-portal.jpg",
@@ -167,7 +167,7 @@
       {
         "file": "ai-tower-drop-off.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-tower-drop-off.jpg",
@@ -179,7 +179,7 @@
       {
         "file": "ai-arrival-boulevard.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-arrival-boulevard.jpg",
@@ -205,14 +205,14 @@
         "loop": false,
         "from": "ai-stepped-well-plaza.jpg",
         "jobId": "1debbc7c-7c5b-4af6-88d5-0a952f53092a",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer video · narration from the published legend and public facts",
+        "credit": "AI visualisation · indicative, not a developer video · narration from the published legend and public facts",
         "audio": true,
         "narration": "The stepped-well plaza: descending steps around a pool, in the manner of a traditional stepped well — a place to sit low, out of the wind."
       },
       {
         "file": "ai-stepped-well-plaza.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-stepped-well-plaza.jpg",
@@ -238,7 +238,7 @@
       {
         "file": "ai-skating-rink.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-skating-rink.jpg",
@@ -257,7 +257,7 @@
       {
         "file": "ai-pickleball-court.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-pickleball-court.jpg",
@@ -283,7 +283,7 @@
       {
         "file": "ai-kids-play-epdm.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-kids-play-epdm.jpg",
@@ -316,7 +316,7 @@
       {
         "file": "ai-multipurpose-court.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-multipurpose-court.jpg",
@@ -328,7 +328,7 @@
       {
         "file": "ai-pet-park.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-pet-park.jpg",
@@ -347,7 +347,7 @@
       {
         "file": "ai-stepped-arena.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-stepped-arena.jpg",
@@ -359,7 +359,7 @@
       {
         "file": "ai-outdoor-workstation.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-outdoor-workstation.jpg",
@@ -399,12 +399,12 @@
         "loop": true,
         "from": "ai-yoga-lawn.jpg",
         "jobId": "24cdbee3-77ac-4aee-aeb5-56ebd2faa1c1",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer video"
+        "credit": "AI visualisation · indicative, not a developer video"
       },
       {
         "file": "ai-yoga-lawn.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-yoga-lawn.jpg",
@@ -416,7 +416,7 @@
       {
         "file": "ai-meditation-deck.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-meditation-deck.jpg",
@@ -428,7 +428,7 @@
       {
         "file": "ai-celebration-lawn.jpg",
         "kind": "ai",
-        "credit": "AI visualisation via Higgsfield · indicative, not a developer render"
+        "credit": "AI visualisation · indicative, not a developer render"
       },
       {
         "file": "plan-celebration-lawn.jpg",

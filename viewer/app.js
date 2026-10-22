@@ -10,6 +10,7 @@ import { buildGroundAO } from './ground-ao.js';
 import { createPost } from './post.js';
 import { chipOf, sortByRank } from './media-kinds.js';
 import { createGallery } from './gallery.js';
+import { resolveVizLabel } from './viz-label.js';
 
 // ============ project ============
 const $ = s => document.querySelector(s);
@@ -331,6 +332,7 @@ document.title = site.name + ' · site walkthrough';
 $('#titleText').textContent = site.name; $('#introName').textContent = site.name;
 $('#introLoc').textContent = [site.developer, site.location].filter(Boolean).join(' · ');
 $('#introDisc').textContent = site.disclaimer || '';
+{ const vl = resolveVizLabel(site), el = $('#vizLabel'); el.textContent = vl; el.hidden = !vl; }   // persistent visualisation label (site.visualisationLabel)
 const northRad = THREE.MathUtils.degToRad(site.plan.northDeg ?? 0), northVec = new THREE.Vector3(Math.sin(northRad), 0, -Math.cos(northRad)), needle = $('#compass .needle');
 function updateCompass() { const a = Math.atan2(northVec.x, -northVec.z) + controls.getAzimuthalAngle(); needle.style.transform = `rotate(${THREE.MathUtils.radToDeg(a).toFixed(1)}deg)`; }
 $('#btnReset').addEventListener('click', () => flyTo(fitView(), 1400));

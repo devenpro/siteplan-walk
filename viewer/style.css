@@ -51,6 +51,10 @@ body { font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif
 #compass .needle::after { content: ""; position: absolute; left: 50%; top: 23px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top: 16px solid #b8b0a4; }
 #compass .needle span { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--paper); font-size: 9px; font-weight: 800; color: var(--ink); display: grid; place-items: center; }
 
+/* persistent visualisation label: top-left under the title chip on every layout (compass is bottom-left on desktop, top-right on phones); solid-ish background, NO backdrop-filter */
+#vizLabel { position: absolute; left: 14px; top: max(54px, calc(env(safe-area-inset-top) + 54px)); max-width: calc(100% - 28px); z-index: 11; pointer-events: none;
+  font: 600 12px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: rgba(247,243,236,.95); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+#vizLabel[hidden] { display: none; }
 #credit { position: absolute; left: 14px; bottom: max(12px, env(safe-area-inset-bottom)); font-size: 12px; color: var(--muted);
   background: rgba(247,243,236,.7); padding: 4px 10px; border-radius: 999px; z-index: 4; }
 #credit a { color: inherit; font-weight: 600; text-decoration: none; }
@@ -157,6 +161,7 @@ body { font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif
   #btnReset { font-size: 0; width: 36px; height: 36px; padding: 0; position: relative; }
   #btnReset::before { content: "↺"; font-size: 18px; line-height: 36px; }
   #credit { display: none; }
+  #vizLabel { left: 10px; max-width: calc(100% - 76px); font-size: 11px; border-radius: 12px; padding: 4px 9px; }   /* leaves room for the compass at the top right */
   #compass { bottom: auto; top: max(58px, calc(env(safe-area-inset-top) + 58px)); left: auto; right: 10px; width: 44px; height: 44px; }
   #compass .needle::before { top: 5px; border-bottom-width: 14px; } #compass .needle::after { top: 19px; border-top-width: 14px; }
   #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 62vh; border-radius: 18px 18px 0 0; transition: transform .35s cubic-bezier(.2,.8,.2,1);
