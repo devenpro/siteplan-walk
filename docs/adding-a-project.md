@@ -78,7 +78,7 @@ node -e "import('./tools/media-lib.mjs').then(m => { m.tightenPauses('voice.mp3'
 node tools/import-ai-video.mjs projects/<slug> selection-narrated.json   # object picks { src, jobId, audio:true, loop:false, narration, voice, mix } → ≤4 MB H.264 + AAC 96k, poster, manifest entry { audio:true, loop:false, narration }, provenance in ai-log.json
 ```
 
-Narrated clips are labelled "AI clip · indicative" with the credit "AI visualisation via Higgsfield · indicative, not a developer video · narration from the published legend and public facts". Playback: muted autoplay behind the same gate as before (tab visible, no reduced motion, no data saving, no tour; otherwise poster + play button), **plays once and holds its last frame with a Replay button**; a **Listen** button unmutes and restarts from the first word (sound is tap-only in every browser); moving to another slide or hotspot mutes again and releases the decoder. Silent 5-s loops (string picks, `loop:true`) still import through the same tool.
+Narrated clips are labelled "AI clip · indicative" with the credit "AI visualisation · indicative, not a developer video · narration from the published legend and public facts". Playback: muted autoplay behind the same gate as before (tab visible, no reduced motion, no data saving, no tour; otherwise poster + play button), **plays once and holds its last frame with a Replay button**; a **Listen** button unmutes and restarts from the first word (sound is tap-only in every browser); moving to another slide or hotspot mutes again and releases the decoder. Silent 5-s loops (string picks, `loop:true`) still import through the same tool.
 
 ## 5. Deploy and verify (20 min)
 
