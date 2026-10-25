@@ -71,6 +71,7 @@ export async function m5aChecks(b, url, ok, wire) {
   const phone = await run(async () => {
     const r = {}; for (const [w, h] of [[390, 780], [320, 640]]) {
       const a = await open({ search: { mods: 'experience,plans' }, hash: '#plan=3p', autostart: true, width: w, height: h }); await vis(a.pg, '#planSvg svg');
+      { let last = null, same = 0; for (let i = 0; i < 50 && same < 3; i++) { const t = await a.pg.evaluate(() => document.getElementById('panel').getBoundingClientRect().top); same = t === last ? same + 1 : 0; last = t; await a.pg.waitForTimeout(200); } }   // the sheet slides up over 0.35 s; hit-test only once it has stopped moving
       r[w] = await a.pg.evaluate(() => { const s = document.querySelector('#planSvg svg'), rect = s.querySelector('rect.room'), b = rect.getBoundingClientRect(), hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
         const sb = s.getBoundingClientRect(); return { overflowX: document.documentElement.scrollWidth - window.innerWidth, inside: sb.left >= 0 && sb.right <= window.innerWidth + 1, svgW: Math.round(sb.width), collapsed: document.getElementById('panel').classList.contains('collapsed'), tappable: !!hit && (hit === rect || rect.contains(hit) || hit.closest('#planSvg') !== null) }; });
       await a.ctx.close(); }
