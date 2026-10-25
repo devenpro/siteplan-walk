@@ -526,6 +526,8 @@ if (SECTIONS.length) {
   setView(hashState.view, true);
   if (SECTIONS.some(x => x.id === 'homes')) {
     plans = createPlans({ units: site.units, listEl: $('#homes'), detailEl: $('#panelPlan'), onOpen: (id, opts = {}) => {   // the host owns panel visibility and the URL
+      if (id) { if (tour) endTour(false); if (selected) deselect(); }   // a plan takes over from a running tour and from a selected hotspot (else the next tour keyframe would close it under the reader)
+      if (id && view !== 'homes') setView('homes', true);   // a plan belongs to the Homes view (tab + hash), whichever way it was opened
       $('#panelPlan').hidden = !id; $('#panelHome').hidden = !!id; $('#panelDetail').hidden = true; if (id) panel.classList.remove('collapsed');
       if (!opts.silent) writeHash(id ? { plan: id } : {}); } });
     if (hashState.plan) { setView('homes', true); plans.open(hashState.plan, { silent: true }); }   // a shared #plan= link: Homes view, plan open, URL untouched; an unknown id leaves the list

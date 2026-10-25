@@ -26,7 +26,8 @@ export function createPlans({ units, listEl, detailEl, onOpen = () => {} }) {
   }
   function open(id, opts = {}) {
     const u = unitById(units, id); if (!u) return false;
-    openId = u.id; compareId = null; active = null; onOpen(openId, opts); render(); return true;
+    onOpen(u.id, opts);   // first: the host may end a tour / clear a hotspot (which closes any plan), so state is set only after it has settled
+    openId = u.id; compareId = null; active = null; render(); return true;
   }
   function close(opts = {}) {
     if (!openId) return; openId = compareId = null; active = null;
