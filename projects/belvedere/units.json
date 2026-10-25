@@ -1,0 +1,68 @@
+{
+  "source": "Traced from Brigade's published unit plans; room sizes from the brochure's room dimensions",
+  "asOf": "2026-10-25",
+  "note": "Indicative layout from published plans · areas are the developer's published figures",
+  "units": [
+    {"id":"1c","bhk":1,"type":"1 BHK","label":"1 BHK + 1 toilet","plan":"Type 1C","tower":"Tower A","unitsRange":"A 0201 to A 4301","floors":"2 to 43","sba":715,"carpet":427,"balcony":37,"beds":1,"baths":1,"entry":{"x":7.4,"y":0.67,"dir":"left"},"rooms":[
+      {"name":"Balcony","x":0,"y":0,"w":1.2,"h":2.83,"kind":"out"},
+      {"name":"Living & dining","x":1.2,"y":0,"w":5.26,"h":3.09},
+      {"name":"Foyer","x":6.46,"y":0,"w":0.9,"h":1.34},
+      {"name":"Kitchen","x":6.46,"y":1.34,"w":1.88,"h":3,"kind":"wet"},
+      {"name":"Master bedroom","x":1.2,"y":3.09,"w":3.55,"h":3.04},
+      {"name":"Toilet","x":4.75,"y":3.09,"w":1.55,"h":2.47,"kind":"wet"}
+    ]},
+    {"id":"2l","bhk":2,"type":"2 BHK","label":"2 BHK + 2 toilets","plan":"Type 2L","tower":"Towers A & C","unitsRange":"A 0004 to A 4304","floors":"Ground to 43","sba":1149,"carpet":709,"balcony":33,"beds":2,"baths":2,"entry":{"x":4.13,"y":8.3,"dir":"up"},"rooms":[
+      {"name":"Master bedroom","x":0,"y":1.2,"w":3.35,"h":3.58},
+      {"name":"Master toilet","x":0.88,"y":4.78,"w":2.47,"h":1.55,"kind":"wet"},
+      {"name":"Foyer","x":3.35,"y":4.4,"w":1.57,"h":3.45},
+      {"name":"Balcony","x":4.92,"y":0,"w":2.58,"h":1.2,"kind":"out"},
+      {"name":"Living & dining","x":4.92,"y":1.2,"w":3.42,"h":5.57},
+      {"name":"Kitchen","x":8.34,"y":0,"w":3.49,"h":2.35,"kind":"wet"},
+      {"name":"Bedroom 2","x":8.34,"y":2.35,"w":3.36,"h":3.7},
+      {"name":"Toilet 2","x":8.34,"y":6.05,"w":1.55,"h":2.47,"kind":"wet"}
+    ]},
+    {"id":"3g","bhk":3,"type":"3 BHK","label":"3 BHK + 2 toilets","plan":"Type 3G · Smart","tower":"Tower B","unitsRange":"B 0016 to B 4316","floors":"Ground to 43","sba":1443,"carpet":909,"balcony":32,"beds":3,"baths":2,"entry":{"x":3.45,"y":-0.55,"dir":"down"},"rooms":[
+      {"name":"Toilet 2","x":0,"y":0.4,"w":2.47,"h":1.38,"kind":"wet"},
+      {"name":"Foyer","x":2.47,"y":0,"w":1.96,"h":1.75},
+      {"name":"Living & dining","x":4.43,"y":0,"w":3.35,"h":5.83},
+      {"name":"Master toilet","x":7.78,"y":0,"w":1.55,"h":2.47,"kind":"wet"},
+      {"name":"Master bedroom","x":9.33,"y":0,"w":3.4,"h":4},
+      {"name":"Kitchen","x":7.78,"y":4,"w":3.4,"h":2.44,"kind":"wet"},
+      {"name":"Bedroom 2","x":0,"y":1.78,"w":3.35,"h":3.3},
+      {"name":"Passage","x":3.35,"y":1.75,"w":1.08,"h":3.28},
+      {"name":"Bedroom 3","x":1.34,"y":5.08,"w":3.09,"h":3.4},
+      {"name":"Balcony","x":4.43,"y":5.83,"w":2.59,"h":1.2,"kind":"out"}
+    ]},
+    {"id":"3p","bhk":3,"type":"3 BHK","label":"3 BHK + 3 toilets","plan":"Type 3P · Luxe","tower":"Tower B","unitsRange":"B 0215 to B 4315","floors":"2 to 43","sba":1767,"carpet":1074,"balcony":80,"beds":3,"baths":3,"entry":{"x":-0.55,"y":6.25,"dir":"right"},"rooms":[
+      {"name":"Utility","x":0,"y":0,"w":2.29,"h":1.2,"kind":"wet"},
+      {"name":"Kitchen","x":0,"y":1.2,"w":2.29,"h":3.09,"kind":"wet"},
+      {"name":"Bedroom 2","x":3.2,"y":0,"w":3.53,"h":3.34},
+      {"name":"Toilet 2","x":2.29,"y":3.34,"w":2.47,"h":1.55,"kind":"wet"},
+      {"name":"Living & dining","x":2.29,"y":4.89,"w":6.2,"h":3.68},
+      {"name":"Balcony 1","x":8.49,"y":4.89,"w":1.2,"h":2.6,"kind":"out"},
+      {"name":"Foyer","x":0,"y":5.5,"w":2.29,"h":1.5},
+      {"name":"Toilet 3","x":0,"y":8.57,"w":1.55,"h":2.47,"kind":"wet"},
+      {"name":"Bedroom 3","x":2.29,"y":8.57,"w":3.38,"h":3.07},
+      {"name":"Master bedroom","x":5.67,"y":8.57,"w":3.7,"h":3.96},
+      {"name":"Balcony 2","x":9.37,"y":9.5,"w":1.2,"h":2.1,"kind":"out"},
+      {"name":"Master toilet","x":3.2,"y":11.64,"w":2.47,"h":1.55,"kind":"wet"}
+    ]},
+    {"id":"3s","bhk":3.5,"type":"3.5 BHK","label":"3 BHK + study + powder + 3 toilets","plan":"Type 3S","tower":"Tower B","unitsRange":"B 0012 to B 4312","floors":"Ground to 43","sba":2013,"carpet":1205,"balcony":108,"beds":3,"baths":3,"entry":{"x":11.6,"y":5.25,"dir":"up"},"rooms":[
+      {"name":"Balcony 2","x":0,"y":0.6,"w":1.2,"h":2.7,"kind":"out"},
+      {"name":"Master bedroom","x":1.2,"y":0,"w":3.96,"h":3.77},
+      {"name":"Balcony 1","x":5.16,"y":0,"w":3.42,"h":1.24,"kind":"out"},
+      {"name":"Utility","x":8.58,"y":0,"w":2.28,"h":1.24,"kind":"wet"},
+      {"name":"Kitchen","x":10.96,"y":0,"w":3.09,"h":2.28,"kind":"wet"},
+      {"name":"Living & dining","x":5.16,"y":1.24,"w":5.8,"h":4.08},
+      {"name":"Foyer","x":10.96,"y":2.28,"w":1.26,"h":2.4},
+      {"name":"Bedroom 3","x":12.22,"y":2.28,"w":3.05,"h":3.48},
+      {"name":"Toilet 3","x":12.22,"y":5.76,"w":1.55,"h":2.47,"kind":"wet"},
+      {"name":"Master toilet","x":1.2,"y":3.77,"w":2.47,"h":1.55,"kind":"wet"},
+      {"name":"Passage","x":3.67,"y":3.77,"w":1.49,"h":1.55},
+      {"name":"Bedroom 2","x":1.2,"y":5.32,"w":3.35,"h":3.06},
+      {"name":"Toilet 2","x":4.55,"y":5.32,"w":1.2,"h":2.47,"kind":"wet"},
+      {"name":"Study","x":5.75,"y":5.32,"w":3.14,"h":2.47},
+      {"name":"Powder","x":8.89,"y":5.32,"w":1.78,"h":1.6,"kind":"wet"}
+    ]}
+  ]
+}
