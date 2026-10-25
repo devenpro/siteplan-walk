@@ -72,10 +72,10 @@ export async function m5aChecks(b, url, ok, wire) {
     const r = {}; for (const [w, h] of [[390, 780], [320, 640]]) {
       const a = await open({ search: { mods: 'experience,plans' }, hash: '#plan=3p', autostart: true, width: w, height: h }); await vis(a.pg, '#planSvg svg');
       r[w] = await a.pg.evaluate(() => { const s = document.querySelector('#planSvg svg'), rect = s.querySelector('rect.room'), b = rect.getBoundingClientRect(), hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
-        return { overflowX: document.documentElement.scrollWidth - window.innerWidth, svgW: Math.round(s.getBoundingClientRect().width), collapsed: document.getElementById('panel').classList.contains('collapsed'), tappable: !!hit && (hit === rect || rect.contains(hit) || hit.closest('#planSvg') !== null) }; });
+        const sb = s.getBoundingClientRect(); return { overflowX: document.documentElement.scrollWidth - window.innerWidth, inside: sb.left >= 0 && sb.right <= window.innerWidth + 1, svgW: Math.round(sb.width), collapsed: document.getElementById('panel').classList.contains('collapsed'), tappable: !!hit && (hit === rect || rect.contains(hit) || hit.closest('#planSvg') !== null) }; });
       await a.ctx.close(); }
     return r; });
-  ok('M5a phone (390 and 320 px): the 3P plan opens with the sheet expanded, no sideways page scroll, a drawing at least 240 px wide, and rooms are tappable', !phone.error && [390, 320].every(w => phone[w] && phone[w].overflowX <= 0 && phone[w].svgW >= 240 && phone[w].collapsed === false && phone[w].tappable), JSON.stringify(phone));
+  ok('M5a phone (390 and 320 px): the 3P plan opens with the sheet expanded, no sideways page scroll, a drawing at least 240 px wide that sits fully inside the viewport, and rooms are tappable', !phone.error && [390, 320].every(w => phone[w] && phone[w].overflowX <= 0 && phone[w].inside && phone[w].svgW >= 240 && phone[w].collapsed === false && phone[w].tappable), JSON.stringify(phone));
 
   // 7. bad data: a 404 and a junk document both leave a working shell without a Homes tab (quiet pages: the 404 itself is an expected console line)
   const bad = await run(async () => {
