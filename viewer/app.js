@@ -11,6 +11,10 @@ import { createPost } from './post.js';
 import { chipOf, sortByRank } from './media-kinds.js';
 import { createGallery } from './gallery.js';
 import { resolveVizLabel } from './viz-label.js';
+import { resolveFlags } from './flags.js';
+import { parseHash, formatHash } from './hash.js';
+import { fitGeo, pxToLatLon } from './geo.js';
+import { DEFAULT_VIEW as DEFAULT_SECTION, resolveSections, resolveView } from './sections.js';
 
 // ============ project ============
 const $ = s => document.querySelector(s);
@@ -22,6 +26,15 @@ const FX = new Set((q.get('fx') || '').split(',').filter(Boolean));
 if (FX.has('blur')) document.documentElement.classList.add('fx-blur');
 const BASE = (q.get('project') || './').replace(/\/?$/, '/');
 const site = await (await fetch(BASE + 'site.json')).json();
+// arc-3 modules: all flags default off (viewer/flags.js); the `exp` class gates every shell style, and must be set before --sheet-h is read below
+const FLAGS = resolveFlags(site, location.search);
+document.documentElement.classList.toggle('exp', FLAGS.experience);
+const SECTIONS = resolveSections(FLAGS, site);
+let view = '';   // current section view id; '' when the shell is off
+const hashState = parseHash(location.hash);
+// the hash holds exactly one of h / tour (legacy behaviour) plus, with the shell on, a non-default view
+const writeHash = (s = {}) => history.replaceState(null, '', formatHash({ view: view && view !== DEFAULT_SECTION ? view : '', ...s }) || location.pathname + location.search);
+let geo = null; if (site.geo) { try { geo = fitGeo(site.geo.points); } catch (e) { console.warn('walk: geo block unusable —', e.message); } }
 const mpp = site.scale.metresPerPx;
 const FLOOR_H = site.scale.floorHeightM || 3.1;
 
@@ -348,7 +361,7 @@ const post = createPost(renderer, scene, camera, { clipBox: new THREE.Box3(new T
 resize(); DEFAULT_VIEW.radius = fitRadius();
 applyView({ radius: 1500, phi: THREE.MathUtils.degToRad(8), theta: DEFAULT_VIEW.theta - 0.35, target: DEFAULT_VIEW.target });
 const explore = $('#btnExplore'); explore.disabled = false; explore.textContent = 'Explore the site';
-const afterReveal = () => { if (hashTour) startTour(decodeURIComponent(hashTour)); else if (hashId) select(decodeURIComponent(hashId), true); };
+const afterReveal = () => { if (hashTour) startTour(hashTour); else if (hashId) select(hashId, true); };
 explore.addEventListener('click', () => { $('#intro').classList.add('hide'); flyTo(fitView(), 5000, afterReveal); });
 if (q.get('autostart')) { $('#intro').classList.add('hide'); flyTo(fitView(), +q.get('autostart') || 5000, afterReveal); }
 
@@ -415,7 +428,7 @@ function select(id, fly, quiet) {
   $('#dNum').textContent = h.n; $('#dName').textContent = h.name; $('#dCaption').textContent = h.caption || '';
   gallery.show(h);
   $('#panelHome').hidden = true; $('#panelDetail').hidden = false; $('#panelDetail').scrollTop = 0; if (!quiet) panel.classList.remove('collapsed');
-  history.replaceState(null, '', '#h=' + encodeURIComponent(id));
+  writeHash({ h: id });
   if (fly) flyToHotspot(h);
 }
 function flyToHotspot(h) {
@@ -424,7 +437,7 @@ function flyToHotspot(h) {
 }
 function deselect() {
   selected = null; ring.visible = false; for (const x of hotspots) pinEls.get(x.id).classList.remove('active');
-  document.querySelectorAll('#hotlist li.item').forEach(li => li.classList.remove('active')); gallery.clear(); showHome(); history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('#hotlist li.item').forEach(li => li.classList.remove('active')); gallery.clear(); showHome(); writeHash();
 }
 $('#btnBack').addEventListener('click', deselect);
 $('#btnFly').addEventListener('click', () => { const h = hotspots.find(x => x.id === selected); if (h) flyToHotspot(h); });
@@ -437,7 +450,7 @@ canvas.addEventListener('pointerdown', () => { if (isPhone()) panel.classList.ad
     const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
     if (ray.ray.intersectPlane(groundPlane, hitP)) { hitP.x = THREE.MathUtils.clamp(hitP.x, bounds.minX - 20, bounds.maxX + 20); hitP.z = THREE.MathUtils.clamp(hitP.z, bounds.minZ - 20, bounds.maxZ + 20); const v = currentView(); flyTo({ radius: Math.min(v.radius, 140), phi: Math.max(v.phi, THREE.MathUtils.degToRad(48)), theta: v.theta, target: new THREE.Vector3(hitP.x, 0, hitP.z) }, 1100); } });
 }
-const hashId = (location.hash.match(/h=([^&]+)/) || [])[1];
+const hashId = hashState.h;
 
 // ============ guided tours ============
 const tours = site.tours || [];
@@ -465,12 +478,12 @@ function startTour(id) {
   controls.enabled = false; deselect(); panel.classList.add('collapsed');
   document.querySelectorAll('#tours button').forEach(b => b.classList.toggle('playing', b.dataset.tour === id));
   tb.name.textContent = def.name; tb.place.textContent = ''; tb.fill.style.width = '0%'; tb.pause.textContent = '❚❚'; tb.bar.hidden = false;
-  history.replaceState(null, '', '#tour=' + id);
+  writeHash({ tour: id });
 }
 function endTour(flyHome = true) {
   if (!tour) return; const wasPlaying = !tour.paused; tour = null; tb.bar.hidden = true;
   document.querySelectorAll('#tours button').forEach(b => b.classList.remove('playing'));
-  controls.enabled = true; history.replaceState(null, '', location.pathname + location.search);
+  controls.enabled = true; writeHash();
   if (flyHome && wasPlaying) flyTo(fitView(), 1400);
 }
 function stepTour(dt) {
@@ -486,13 +499,27 @@ function stepTour(dt) {
   let kf = -1; for (let i = 0; i < def.keyframes.length; i++) if (def.keyframes[i].t <= f + 0.02) kf = i;
   if (kf !== tour.lastKf) { tour.lastKf = kf; const h = def.keyframes[kf] && def.keyframes[kf].hotspot; if (h) { select(h, false, true); tb.place.textContent = hotspots.find(x => x.id === h)?.name || ''; } }
   tb.fill.style.width = (f * 100).toFixed(1) + '%';
-  if (f >= 1) { const t = tour; tour = null; tb.bar.hidden = true; document.querySelectorAll('#tours button').forEach(b => b.classList.remove('playing')); controls.enabled = true; history.replaceState(null, '', location.pathname + location.search); tourState.ended.push(t.def.id); }
+  if (f >= 1) { const t = tour; tour = null; tb.bar.hidden = true; document.querySelectorAll('#tours button').forEach(b => b.classList.remove('playing')); controls.enabled = true; writeHash(); tourState.ended.push(t.def.id); }
 }
 const tourState = { ended: [] };
 tb.pause.addEventListener('click', () => { if (!tour) return; tour.paused = !tour.paused; tb.pause.textContent = tour.paused ? '▶' : '❚❚'; controls.enabled = tour.paused; if (!tour.paused) { tour.blendFrom = currentView(); tour.blendT = 0; } });
 tb.exit.addEventListener('click', () => endTour(true));
 canvas.addEventListener('pointerdown', () => { if (tour && !tour.paused) { tour.paused = true; tb.pause.textContent = '▶'; controls.enabled = true; } });
-const hashTour = (location.hash.match(/tour=([^&]+)/) || [])[1];
+const hashTour = hashState.tour;
+
+// ============ section shell (experience flag) ============
+const secNav = $('#sections');
+function setView(id) {
+  view = resolveView(id, SECTIONS);
+  document.querySelectorAll('#panelHome > [data-view]').forEach(el => el.classList.toggle('on', !!view && el.dataset.view === view));
+  secNav.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === view)));
+  writeHash(selected ? { h: selected } : tour ? { tour: tour.def.id } : {});
+}
+if (SECTIONS.length) {
+  secNav.innerHTML = SECTIONS.map(s => `<button role="tab" data-view="${s.id}" aria-selected="false">${s.label}</button>`).join(''); secNav.hidden = false;
+  secNav.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (selected) deselect(); setView(b.dataset.view); });
+  setView(hashState.view);
+}
 
 // ============ loop ============
 function resize() {
@@ -540,7 +567,7 @@ renderer.setAnimationLoop(now => {
   updateCompass(); updatePins(now); fitShadowToView(); post.render(); labelRenderer.render(scene, camera);
 });
 
-window.__walk = { scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
+window.__walk = { flags: FLAGS, sections: SECTIONS, setView, get view() { return view; }, geo, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
   quality: QUALITY, tier: TIER, PRESETS, applyLighting, get lightK() { return lightK; }, sky, plinthTopY: PLINTH_TOP, facades: facadeInfo,
   greenery: { trees: greenery.trees, hedges: greenery.hedges, variants: greenery.variants, lawn: !!greenery.lawnTexture, water: !!waterTex }, hedgeCount: greenery.hedges, waterMeshes,
   post, sun, get shadowFit() { return shadowFit; }, groundAO: { size: groundAO.size, darkened: groundAO.darkened }, autoTier, logDepth: LOG_DEPTH,

@@ -63,6 +63,11 @@ body { font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif
 #panel { position: absolute; top: 64px; right: 14px; bottom: 14px; width: var(--panel-w); z-index: 6; display: flex; flex-direction: column;
   background: rgba(247,243,236,.92); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
 #panel .handle { display: none; }
+/* arc 3 section shell: only exists under html.exp (the `experience` flag); flags off = none of this applies */
+html.exp #sections:not([hidden]) { display: flex; gap: 6px; flex: 0 0 auto; padding: 14px 14px 8px; }
+html.exp #sections button { flex: 1; min-height: 44px; font: 600 13px system-ui, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+html.exp #sections button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+html.exp #panelHome > [data-view]:not(.on) { display: none; }
 #panelHome, #panelDetail { flex: 1; overflow: auto; padding: 14px 14px 18px; overscroll-behavior: contain; }
 .tours { display: flex; gap: 6px; margin-bottom: 12px; }
 .tours button { flex: 1; font: 600 12px/1.2 system-ui, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 8px; cursor: pointer; text-align: left; }
@@ -166,6 +171,8 @@ body { font: 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif
   #compass .needle::before { top: 5px; border-bottom-width: 14px; } #compass .needle::after { top: 19px; border-top-width: 14px; }
   #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 62vh; border-radius: 18px 18px 0 0; transition: transform .35s cubic-bezier(.2,.8,.2,1);
     padding-bottom: env(safe-area-inset-bottom); }
+  html.exp { --sheet-h: 256px; }   /* the section bar adds 52px to the collapsed sheet; app.js reads this var for the camera offset */
+  html.exp #sections:not([hidden]) { padding: 0 14px 8px; }
   #panel.collapsed { transform: translateY(calc(62vh - var(--sheet-h))); }
   #panel .handle { display: block; flex: 0 0 22px; background: none; border: 0; padding: 0; cursor: pointer; }
   #panel .handle span { display: block; width: 44px; height: 5px; border-radius: 3px; background: rgba(29,26,22,.25); margin: 8px auto 0; }

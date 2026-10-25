@@ -31,11 +31,12 @@
 
   <aside id="panel" class="collapsed" aria-label="Places on the site">
     <button class="handle" id="sheetHandle" aria-label="Expand or collapse the list"><span></span></button>
+    <nav id="sections" role="tablist" aria-label="Sections" hidden></nav>
     <div id="panelHome">
-      <div class="tours" id="tours" role="group" aria-label="Guided tours"></div>
-      <div class="facts" id="facts"></div>
-      <div class="themes" id="themes" role="group" aria-label="Filter by theme"></div>
-      <ol class="hotlist" id="hotlist"></ol>
+      <div class="tours" id="tours" role="group" aria-label="Guided tours" data-view="tours"></div>
+      <div class="facts" id="facts" data-view="masterplan"></div>
+      <div class="themes" id="themes" role="group" aria-label="Filter by theme" data-view="masterplan"></div>
+      <ol class="hotlist" id="hotlist" data-view="masterplan"></ol>
     </div>
     <div id="panelDetail" hidden>
       <button class="back" id="btnBack">‹ All places</button>
