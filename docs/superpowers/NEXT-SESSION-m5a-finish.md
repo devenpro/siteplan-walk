@@ -1,3 +1,7 @@
+# UPDATE (later the same day): both Important findings are FIXED and verified
+Commit `b4bf81c` on `arc3-m5a` (local; push it if the owner says so). Deployed with flags off; full live suite **45/45**; M5a checks 8/8; unit suite 107/107. Fix 1 (a plan opened during a tour / with a hotspot selected ends the tour, clears the hotspot, and switches to the Homes view) turned the red tour check green; fix 2 (the compare check asserts the figure ids `2l`,`3g` and rooms 8/10) turned the "compare lists the open plan twice" mutation from MISSED to CAUGHT (see `docs/checkpoints/m5a/mutations.md`).
+**What is left is only: the owner phone gate -> (ask) push -> ff-merge `arc3-m5a` into `master` -> push `master`.** Skip the "START HERE" section below; it is kept as history. The 6 deferred minors stay deferred unless the owner asks.
+
 # Next session: finish M5a (Homes view), then the owner phone gate
 
 State written 2026-10-25 at the end of a long session. Repo `/root/projects/siteplan-walk`, branch **`arc3-m5a`** (pushed to origin 2026-10-25 at a23bb25, NOT merged; `master` = `e6568ce`, the M1 merge). Deployed to `walk.csoul.cloud/belvedere` from `arc3-m5a` @ `40bed9a` (all flags off, so visitors see nothing; try `?mods=experience,plans`).
