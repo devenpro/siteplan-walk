@@ -90,9 +90,9 @@ test('Belvedere geo: fitted scale and north equal the plan\'s (provisional) or s
   const dScale = Math.abs(scaleOf(geoSite) / site.scale.metresPerPx - 1), dNorth = Math.abs(((northDegOf(geoSite) - site.plan.northDeg + 540) % 360) - 180);
   const tol = site.geo.status === 'verified' ? [0.05, 5] : [1e-9, 1e-6]; assert.ok(dScale <= tol[0], 'scale ' + dScale); assert.ok(dNorth <= tol[1], 'north ' + dNorth);
 });
-test('Belvedere geo: the anchor sits on the plot frontage and the plot centre is within 1.5 km of Budigere Cross (13.0462, 77.7504)', () => {
+test('Belvedere geo: the anchor sits on the plot frontage and the plot centre is within 600 m of Budigere Cross (13.0462, 77.7504); it is about 210 m', () => {
   const [px, py] = site.geo.points[0].px, ys = site.boundary.map(p => p[1]); assert.equal(py, Math.max(...ys), 'anchor on the frontage edge');
   assert.ok(px >= Math.min(...site.boundary.map(p => p[0])) && px <= Math.max(...site.boundary.map(p => p[0])), 'anchor within the plot width');
   const c = site.boundary.reduce((a, p) => [a[0] + p[0] / site.boundary.length, a[1] + p[1] / site.boundary.length], [0, 0]), [la, lo] = pxToLatLon(geoSite, c);
-  assert.ok(distanceM(la, lo, 13.0462, 77.7504) <= 1500, `${la},${lo}`);
+  assert.ok(distanceM(la, lo, 13.0462, 77.7504) <= 600, `${la},${lo}`);
 });
