@@ -13,7 +13,7 @@ import { createGallery } from './gallery.js';
 import { resolveVizLabel } from './viz-label.js';
 import { resolveFlags } from './flags.js';
 import { parseHash, formatHash } from './hash.js';
-import { fitGeo, pxToLatLon } from './geo.js';
+import { geoFromSite, pxToLatLon } from './geo.js';
 import { DEFAULT_VIEW as DEFAULT_SECTION, resolveSections, resolveView } from './sections.js';
 
 // ============ project ============
@@ -34,7 +34,7 @@ let view = '';   // current section view id; '' when the shell is off
 const hashState = parseHash(location.hash);
 // the hash holds exactly one of h / tour (legacy behaviour) plus, with the shell on, a non-default view
 const writeHash = (s = {}) => history.replaceState(null, '', formatHash({ view: view && view !== DEFAULT_SECTION ? view : '', ...s }) || location.pathname + location.search);
-let geo = null; if (site.geo) { try { geo = fitGeo(site.geo.points); } catch (e) { console.warn('walk: geo block unusable —', e.message); } }
+let geo = null; try { geo = geoFromSite(site); } catch (e) { console.warn('walk: geo block unusable —', e.message); }
 const mpp = site.scale.metresPerPx;
 const FLOOR_H = site.scale.floorHeightM || 3.1;
 
@@ -567,7 +567,7 @@ renderer.setAnimationLoop(now => {
   updateCompass(); updatePins(now); fitShadowToView(); post.render(); labelRenderer.render(scene, camera);
 });
 
-window.__walk = { flags: FLAGS, sections: SECTIONS, setView, get view() { return view; }, geo, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
+window.__walk = { flags: FLAGS, sections: SECTIONS, setView, get view() { return view; }, geo, geoStatus: geo ? (site.geo.status || 'unverified') : null, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
   quality: QUALITY, tier: TIER, PRESETS, applyLighting, get lightK() { return lightK; }, sky, plinthTopY: PLINTH_TOP, facades: facadeInfo,
   greenery: { trees: greenery.trees, hedges: greenery.hedges, variants: greenery.variants, lawn: !!greenery.lawnTexture, water: !!waterTex }, hedgeCount: greenery.hedges, waterMeshes,
   post, sun, get shadowFit() { return shadowFit; }, groundAO: { size: groundAO.size, darkened: groundAO.darkened }, autoTier, logDepth: LOG_DEPTH,

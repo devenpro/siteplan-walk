@@ -7,15 +7,27 @@ const zOf = px => [px[0], -px[1]];
 const mLatAt = lat => 111132.92 - 559.82 * Math.cos(2 * lat * RAD) + 1.175 * Math.cos(4 * lat * RAD);
 const mLonAt = lat => 111412.84 * Math.cos(lat * RAD) - 93.5 * Math.cos(3 * lat * RAD);
 
-export function fitGeo(points) {
+// fitGeo(points)            : >= 2 distinct points, free scale + rotation (least squares).
+// fitGeo(points, {metresPerPx, northDeg}) : >= 1 point, scale and rotation fixed to the plan's own (northDeg = degrees clockwise from image-up); only the shift is fitted (provisional georef).
+export function fitGeo(points, known) {
   const ok = Array.isArray(points) ? points : [];
+  if (known) {
+    if (!(known.metresPerPx > 0)) throw new Error('geo: known.metresPerPx must be > 0');
+    if (!Number.isFinite(known.northDeg)) throw new Error('geo: known.northDeg must be a number');
+    if (ok.length < 1) throw new Error('geo: need at least 1 point');
+  }
   const lat0 = ok.length ? ok[0].lat : 0, lon0 = ok.length ? ok[0].lon : 0, mLon = mLonAt(lat0), mLat = mLatAt(lat0);
   const z = ok.map(p => zOf(p.px)), w = ok.map(p => [(p.lon - lon0) * mLon, (p.lat - lat0) * mLat]);
   const n = ok.length, zm = [z.reduce((s, v) => s + v[0], 0) / n, z.reduce((s, v) => s + v[1], 0) / n], wm = [w.reduce((s, v) => s + v[0], 0) / n, w.reduce((s, v) => s + v[1], 0) / n];
-  let num = [0, 0], den = 0;
-  for (let i = 0; i < n; i++) { const zc = [z[i][0] - zm[0], z[i][1] - zm[1]], wc = [w[i][0] - wm[0], w[i][1] - wm[1]]; const t = mul([zc[0], -zc[1]], wc); num = [num[0] + t[0], num[1] + t[1]]; den += zc[0] * zc[0] + zc[1] * zc[1]; }
-  if (n < 2 || den < 1e-9) throw new Error('geo: need at least 2 distinct points');
-  const a = [num[0] / den, num[1] / den], am = mul(a, zm);
+  let a;
+  if (known) { const nu = known.northDeg * RAD; a = [known.metresPerPx * Math.cos(nu), known.metresPerPx * Math.sin(nu)]; }   // a = scale·e^{iν}, ν = north clockwise from image-up
+  else {
+    let num = [0, 0], den = 0;
+    for (let i = 0; i < n; i++) { const zc = [z[i][0] - zm[0], z[i][1] - zm[1]], wc = [w[i][0] - wm[0], w[i][1] - wm[1]]; const t = mul([zc[0], -zc[1]], wc); num = [num[0] + t[0], num[1] + t[1]]; den += zc[0] * zc[0] + zc[1] * zc[1]; }
+    if (n < 2 || den < 1e-9) throw new Error('geo: need at least 2 distinct points');
+    a = [num[0] / den, num[1] / den];
+  }
+  const am = mul(a, zm);
   return { lat0, lon0, mLat, mLon, a, b: [wm[0] - am[0], wm[1] - am[1]] };
 }
 export function pxToLatLon(g, px) { const w = mul(g.a, zOf(px)); return [g.lat0 + (w[1] + g.b[1]) / g.mLat, g.lon0 + (w[0] + g.b[0]) / g.mLon]; }
@@ -29,4 +41,10 @@ export const scaleOf = g => Math.hypot(g.a[0], g.a[1]);   // metres per plan pix
 export function northDegOf(g) {   // degrees clockwise from image-up (site.json plan.northDeg convention), in [0, 360)
   const zn = div([0, 1], g.a);   // plan-space direction of north (z = x - i·y)
   return ((Math.atan2(zn[0], zn[1]) / RAD) % 360 + 360) % 360;
+}
+// The one rule for a site.json `geo` block: with fewer than 2 points the plan's own scale + north anchor it (provisional); with 2+ the fit is free. No block => null.
+export function geoFromSite(site) {
+  const g = site && site.geo; if (!g) return null;
+  const pts = Array.isArray(g.points) ? g.points : [];
+  return fitGeo(pts, pts.length < 2 ? { metresPerPx: site.scale.metresPerPx, northDeg: site.plan.northDeg } : undefined);
 }

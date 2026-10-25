@@ -26,3 +26,8 @@ attempt 1 — 5 of 67 edges over 6 px, worst 9 px, rink and splash pad invented 
 worst 9 px, the plan's labels and numbers rendered into the photo, splash pad still a pool. FAILED the acceptance twice → dropped;
 the plan stays the ground. Geometry was a near miss both times (≈ 90 % of edges within 2 m). Log: source/ai-ground-log.json;
 evidence: docs/checkpoints/b5/. Not used anywhere in the viewer.
+
+## Georeference (arc 3, M1; added 2026-10-25)
+- `site.json` `geo`: PROVISIONAL (about 150 m). One point: the owner-supplied Google Maps place pin "Brigade Belvedere" (13.0477816, 77.7495055), taken as the entrance gate at plan px (313, 835). Scale and north come from the plan itself (`scale.metresPerPx`, `plan.northDeg`).
+- `source/osm-georef.json`: OpenStreetMap snapshot of buildings and highways within 1.5 km of Budigere Cross (13.0462, 77.7504), fetched 2026-10-25 with `tools/osm-snapshot.mjs`. © OpenStreetMap contributors, ODbL. Used to see that the pin lies on Budigere Road (3 m from the centreline) and that the compound on its south-west side is a different Brigade project (51 levels), not Belvedere.
+- Not accepted for surroundings (M2) or place distances (M3) until 2+ corner pins and 3 independent checks within 20 m exist: `node tools/georef-check.mjs belvedere`.

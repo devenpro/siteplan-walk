@@ -55,6 +55,17 @@
     [494,835],
     [112,835]
   ],
+  "geo": {
+    "status": "provisional",
+    "accuracy": "about 150 m: one place pin, with the plan's own scale and north (site.scale, plan.northDeg)",
+    "points": [
+      { "label": "Google Maps place pin 'Brigade Belvedere', taken as the gate on the main road", "px": [313, 835], "lat": 13.0477816, "lon": 77.7495055, "source": "owner-supplied Google Maps place link, 2026-10-25" }
+    ],
+    "check": [],
+    "method": "Single place pin used as the entrance gate (plan px 313,835); scale and north come from the plan itself. The pin is 3 m from OpenStreetMap's Budigere Road centreline, so it fixes the frontage but not which side of the road the plot is on; OSM's compound on the south-west side is another Brigade project (51 levels), so the side is unconfirmed. Not accepted for surroundings or place distances until 2+ corner pins and 3 independent checks within 20 m exist.",
+    "asOf": "2026-10-25",
+    "attribution": "Road check: © OpenStreetMap contributors (ODbL), projects/belvedere/source/osm-georef.json"
+  },
   "volumes": [
     {
       "id": "tower-a",
