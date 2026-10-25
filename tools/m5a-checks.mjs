@@ -67,6 +67,16 @@ export async function m5aChecks(b, url, ok, wire) {
     await a.ctx.close(); return { chips, ppm, self, closed }; });
   ok('M5a compare: chips offer the other 4 types; 2L vs 3G render at equal pixels-per-metre (1 %); comparing a type with itself does not throw or add a plan; closing clears compare', !cmp.error && cmp.chips.sort().join() === ['1c', '3g', '3p', '3s'].join() && cmp.ppm.length === 2 && Math.abs(cmp.ppm[0].ppm / cmp.ppm[1].ppm - 1) < 0.01 && !cmp.self.threw && cmp.self.svgs === 2 && cmp.closed.openId === null && cmp.closed.compareId === null, JSON.stringify(cmp));
 
+  // 5b. opening a plan takes over from a running tour and from a selected hotspot (a tour keyframe must not yank the plan away mid-read)
+  const take = await run(async () => {
+    const a = await open({ search: { mods: 'experience,plans', tourSpeed: '60' } });
+    const r = await a.pg.evaluate(async () => { const w = window.__walk, wait = ms => new Promise(x => setTimeout(x, ms)), tid = w.site.tours[0].id, hid = w.hotspots[0].id, o = {}, st = () => ({ tour: !!w.tour, openId: w.plans.openId, hash: location.hash, planShown: !document.getElementById('panelPlan').hidden, detailHidden: document.getElementById('panelDetail').hidden });
+      w.startTour(tid); await wait(400); o.touring = !!w.tour; w.plans.open('2l'); o.afterOpen = st(); await wait(4000); o.later = st();
+      w.plans.close(); w.select(hid, false); o.sel = w.selected; w.plans.open('3g'); o.afterSelect = { selected: w.selected, ...st() }; return o; });
+    await a.ctx.close(); return r; });
+  ok('M5a opening a plan ends a running tour (URL and panel stay on the plan through the next keyframes) and clears a selected hotspot', !take.error && take.touring && take.afterOpen.tour === false && take.afterOpen.openId === '2l' && take.afterOpen.hash === '#view=homes&plan=2l' && take.afterOpen.planShown
+    && take.later.tour === false && take.later.openId === '2l' && take.later.planShown && take.later.detailHidden && take.later.hash === '#view=homes&plan=2l' && take.sel !== null && take.afterSelect.selected === null && take.afterSelect.detailHidden && take.afterSelect.openId === '3g' && take.afterSelect.hash === '#view=homes&plan=3g', JSON.stringify(take).slice(0, 800));
+
   // 6. phone: the tallest plan (3P) never scrolls the page sideways and is tappable
   const phone = await run(async () => {
     const r = {}; for (const [w, h] of [[390, 780], [320, 640]]) {
