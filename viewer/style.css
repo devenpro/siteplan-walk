@@ -68,6 +68,33 @@ html.exp #sections:not([hidden]) { display: flex; gap: 6px; flex: 0 0 auto; padd
 html.exp #sections button { flex: 1; min-height: 44px; font: 600 13px system-ui, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 html.exp #sections button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 html.exp #panelHome > [data-view]:not(.on) { display: none; }
+/* M5a Homes view (flag `plans`): list cards, plan pane, compare */
+html.exp .homes-note { margin: 0 0 10px; font-size: 11px; color: var(--muted); }
+html.exp .homes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+html.exp .unitcard { display: flex; flex-direction: column; gap: 4px; min-height: 44px; text-align: left; font: inherit; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; cursor: pointer; }
+html.exp .unitcard:hover { border-color: var(--accent); }
+html.exp .unitcard .uc-plan svg { display: block; width: 100%; height: 86px; }
+html.exp .unitcard .uc-t { font-size: 13px; } html.exp .unitcard .uc-m { font-size: 11px; color: var(--muted); }
+html.exp #panelPlan { flex: 1; overflow: auto; overflow-x: hidden; padding: 14px 14px 20px; overscroll-behavior: contain; }
+html.exp #panelPlan[hidden] { display: none; }
+html.exp #panelPlan .back { font: 600 13px system-ui; background: none; border: 0; color: var(--muted); padding: 2px 0 10px; cursor: pointer; min-height: 44px; }
+html.exp .plan-title { font-size: 16px; } html.exp .plan-sub { font-size: 12px; color: var(--muted); margin: 2px 0 10px; }
+html.exp #planSvg { overflow-x: hidden; }
+html.exp .pfig { margin: 0 0 10px; } html.exp .pfig svg { display: block; max-width: none; height: auto; }
+html.exp .pfig figcaption { font-size: 11px; color: var(--muted); margin-top: 2px; } html.exp .pfig figcaption b { color: var(--ink); }
+html.exp .homes .room, html.exp #planSvg .room { fill: #f1ece2; cursor: pointer; } html.exp .homes .room.wet, html.exp #planSvg .room.wet { fill: #dbe7ea; } html.exp .homes .room.out, html.exp #planSvg .room.out { fill: #e3ecd8; }
+html.exp #planSvg .room.on { fill: rgba(200,119,42,.35); }
+html.exp #planSvg .rlab { font-family: system-ui, sans-serif; font-weight: 600; text-anchor: middle; fill: var(--ink); pointer-events: none; }
+html.exp #planSvg .rdim { font-family: system-ui, sans-serif; text-anchor: middle; fill: var(--muted); pointer-events: none; }
+html.exp #planSvg text { pointer-events: none; }
+html.exp .plan-room { min-height: 20px; font-size: 12px; color: var(--ink); margin: 2px 0 10px; }
+html.exp .plan-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html.exp .plan-facts div { font-size: 12px; color: var(--muted); } html.exp .plan-facts b { display: block; color: var(--ink); font-size: 13px; }
+html.exp .plan-compare { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; font-size: 12px; color: var(--muted); }
+html.exp .plan-compare .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+html.exp .compare-chip { min-height: 44px; padding: 0 12px; font: 600 12px system-ui; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+html.exp .compare-chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+html.exp .plan-label { font-size: 11px; color: var(--muted); margin: 6px 0 0; }
 #panelHome, #panelDetail { flex: 1; overflow: auto; padding: 14px 14px 18px; overscroll-behavior: contain; }
 .tours { display: flex; gap: 6px; margin-bottom: 12px; }
 .tours button { flex: 1; font: 600 12px/1.2 system-ui, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 8px; cursor: pointer; text-align: left; }

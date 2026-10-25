@@ -15,6 +15,8 @@ import { resolveFlags } from './flags.js';
 import { parseHash, formatHash } from './hash.js';
 import { geoFromSite, pxToLatLon } from './geo.js';
 import { DEFAULT_VIEW as DEFAULT_SECTION, resolveSections, resolveView } from './sections.js';
+import { loadUnits } from './units.js';
+import { createPlans } from './plans.js';
 
 // ============ project ============
 const $ = s => document.querySelector(s);
@@ -29,6 +31,8 @@ const site = await (await fetch(BASE + 'site.json')).json();
 // arc-3 modules: all flags default off (viewer/flags.js); the `exp` class gates every shell style, and must be set before --sheet-h is read below
 const FLAGS = resolveFlags(site, location.search);
 document.documentElement.classList.toggle('exp', FLAGS.experience);
+if (FLAGS.experience && FLAGS.plans && site.unitsFile) site.units = await loadUnits(BASE + site.unitsFile);   // M5a: only fetched when the Homes view can show; [] on any failure
+let plans = null;   // the Homes view controller (viewer/plans.js), or null when the section is absent
 const SECTIONS = resolveSections(FLAGS, site);
 let view = '';   // current section view id; '' when the shell is off
 const hashState = parseHash(location.hash);
@@ -418,7 +422,7 @@ function setTheme(t) {
 }
 const panel = $('#panel');
 $('#sheetHandle').addEventListener('click', () => panel.classList.toggle('collapsed'));
-function showHome() { $('#panelDetail').hidden = true; $('#panelHome').hidden = false; }
+function showHome() { $('#panelDetail').hidden = true; $('#panelPlan').hidden = true; if (plans) plans.close({ silent: true }); $('#panelHome').hidden = false; }
 function select(id, fly, quiet) {
   const h = hotspots.find(x => x.id === id); if (!h) return;
   selected = id;
@@ -427,6 +431,7 @@ function select(id, fly, quiet) {
   ring.visible = !h.isTower; ring.position.set(h.world.x, 0.45, h.world.z);
   $('#dNum').textContent = h.n; $('#dName').textContent = h.name; $('#dCaption').textContent = h.caption || '';
   gallery.show(h);
+  if (plans) plans.close({ silent: true }); $('#panelPlan').hidden = true;
   $('#panelHome').hidden = true; $('#panelDetail').hidden = false; $('#panelDetail').scrollTop = 0; if (!quiet) panel.classList.remove('collapsed');
   writeHash({ h: id });
   if (fly) flyToHotspot(h);
@@ -517,8 +522,14 @@ function setView(id, boot) {   // boot: apply the view from the incoming link wi
 }
 if (SECTIONS.length) {
   secNav.innerHTML = SECTIONS.map(s => `<button role="tab" data-view="${s.id}" aria-selected="false">${s.label}</button>`).join(''); secNav.hidden = false;
-  secNav.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (selected) deselect(); setView(b.dataset.view); });
+  secNav.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (selected) deselect(); if (plans && plans.openId) plans.close(); setView(b.dataset.view); });
   setView(hashState.view, true);
+  if (SECTIONS.some(x => x.id === 'homes')) {
+    plans = createPlans({ units: site.units, listEl: $('#homes'), detailEl: $('#panelPlan'), onOpen: (id, opts = {}) => {   // the host owns panel visibility and the URL
+      $('#panelPlan').hidden = !id; $('#panelHome').hidden = !!id; $('#panelDetail').hidden = true; if (id) panel.classList.remove('collapsed');
+      if (!opts.silent) writeHash(id ? { plan: id } : {}); } });
+    if (hashState.plan) { setView('homes', true); plans.open(hashState.plan, { silent: true }); }   // a shared #plan= link: Homes view, plan open, URL untouched; an unknown id leaves the list
+  }
 }
 
 // ============ loop ============
@@ -567,7 +578,7 @@ renderer.setAnimationLoop(now => {
   updateCompass(); updatePins(now); fitShadowToView(); post.render(); labelRenderer.render(scene, camera);
 });
 
-window.__walk = { flags: FLAGS, sections: SECTIONS, setView, get view() { return view; }, geo, geoStatus: geo ? (site.geo.status || 'unverified') : null, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
+window.__walk = { flags: FLAGS, get plans() { return plans; }, sections: SECTIONS, setView, get view() { return view; }, geo, geoStatus: geo ? (site.geo.status || 'unverified') : null, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
   quality: QUALITY, tier: TIER, PRESETS, applyLighting, get lightK() { return lightK; }, sky, plinthTopY: PLINTH_TOP, facades: facadeInfo,
   greenery: { trees: greenery.trees, hedges: greenery.hedges, variants: greenery.variants, lawn: !!greenery.lawnTexture, water: !!waterTex }, hedgeCount: greenery.hedges, waterMeshes,
   post, sun, get shadowFit() { return shadowFit; }, groundAO: { size: groundAO.size, darkened: groundAO.darkened }, autoTier, logDepth: LOG_DEPTH,
