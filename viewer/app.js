@@ -509,16 +509,16 @@ const hashTour = hashState.tour;
 
 // ============ section shell (experience flag) ============
 const secNav = $('#sections');
-function setView(id) {
+function setView(id, boot) {   // boot: apply the view from the incoming link without rewriting the URL (a shared #h= / #tour= link must survive until Explore)
   view = resolveView(id, SECTIONS);
   document.querySelectorAll('#panelHome > [data-view]').forEach(el => el.classList.toggle('on', !!view && el.dataset.view === view));
   secNav.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === view)));
-  writeHash(selected ? { h: selected } : tour ? { tour: tour.def.id } : {});
+  if (!boot) writeHash(selected ? { h: selected } : tour ? { tour: tour.def.id } : {});
 }
 if (SECTIONS.length) {
   secNav.innerHTML = SECTIONS.map(s => `<button role="tab" data-view="${s.id}" aria-selected="false">${s.label}</button>`).join(''); secNav.hidden = false;
   secNav.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (selected) deselect(); setView(b.dataset.view); });
-  setView(hashState.view);
+  setView(hashState.view, true);
 }
 
 // ============ loop ============

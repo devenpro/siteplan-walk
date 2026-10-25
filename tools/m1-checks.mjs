@@ -1,15 +1,15 @@
 // M1 live checks (arc 3 shell + georef): imported by check.mjs, also runnable alone: node tools/_m1-smoke.mjs <url>  (a scratch runner that calls m1Checks).
 // Each scenario opens its own page. `ok(name, pass, info)` is check.mjs's recorder; `wire(page)` attaches its console-error collector.
 export async function m1Checks(b, url, ok, wire, opts = {}) {
-  const open = async ({ search = {}, hash = '', width = 1440, height = 900, stripGeo = false } = {}) => {
+  const open = async ({ search = {}, hash = '', width = 1440, height = 900, stripGeo = false, autostart = true } = {}) => {
     const ctx = await b.newContext({ viewport: { width, height }, reducedMotion: 'reduce' }), pg = await ctx.newPage(); wire(pg);
     if (stripGeo) await pg.route('**/site.json', async route => { const r = await route.fetch(); const j = await r.json(); delete j.geo; await route.fulfill({ response: r, json: j }); });
-    const u = new URL(url); u.searchParams.set('autostart', '800'); u.searchParams.set('q', 'low'); for (const [k, v] of Object.entries(search)) u.searchParams.set(k, v); u.hash = hash;
+    const u = new URL(url); if (autostart) u.searchParams.set('autostart', '800'); u.searchParams.set('q', 'low'); for (const [k, v] of Object.entries(search)) u.searchParams.set(k, v); u.hash = hash;
     await pg.goto(u.toString(), { waitUntil: 'networkidle', timeout: 120000 });
     const booted = await pg.waitForFunction(() => !!window.__walk, null, { timeout: 180000 }).then(() => true).catch(() => false); await pg.waitForTimeout(1500);
     return { ctx, pg, booted };
   };
-  const shown = sel => `(() => { const e = document.querySelector('${sel}'); return !!e && getComputedStyle(e).display !== 'none' && !e.hidden; })()`;
+  const shown = sel => `(() => { const e = document.querySelector('${sel}'); return !!e && !e.closest('[hidden]') && e.checkVisibility(); })()`;   // visible itself AND through every ancestor
 
   // 1. flags off: the shell is invisible and the legacy hashes keep their exact bytes
   let off = { failed: true };
@@ -40,6 +40,15 @@ export async function m1Checks(b, url, ok, wire, opts = {}) {
     if (a.booted && c.booted) deep = { tours: await a.pg.evaluate(() => window.__walk.view), bogus: await c.pg.evaluate(({ s }) => ({ view: window.__walk.view, hotlist: eval(s) }), { s: shown('#hotlist') }) };
     await a.ctx.close(); await c.ctx.close(); }
   ok('M1 deep links: #view=tours opens on Tours; #view=bogus falls back to a visible Master plan', deep.tours === 'tours' && deep.bogus && deep.bogus.view === 'masterplan' && deep.bogus.hotlist === true, JSON.stringify(deep));
+
+  // 2b. a shared deep link must survive boot with the shell on, before anyone presses Explore (the section bar's first setView must not rewrite the URL)
+  let boot = { failed: true };
+  { const a = await open({ search: { mods: 'experience' }, hash: '#h=entrance-portal', autostart: false });
+    if (a.booted) { const tid = await a.pg.evaluate(() => window.__walk.site.tours[0].id), introUp = await a.pg.evaluate(() => !document.getElementById('intro').classList.contains('hide')), hashH = await a.pg.evaluate(() => location.hash);
+      const c = await open({ search: { mods: 'experience' }, hash: '#tour=' + tid, autostart: false }); const hashT = c.booted ? await c.pg.evaluate(() => location.hash) : null; await c.ctx.close();
+      boot = { introUp, hashH, hashT, tid }; }
+    await a.ctx.close(); }
+  ok('M1 deep links survive boot with the shell on: #h=<id> and #tour=<id> are still in the URL before Explore is pressed', !boot.failed && boot.introUp && boot.hashH === '#h=entrance-portal' && boot.hashT === '#tour=' + boot.tid, JSON.stringify(boot));
 
   // 3. phone: the sheet var follows the flag (204 off, 256 with the bar) and the tabs are touch-sized
   let ph = { failed: true };
