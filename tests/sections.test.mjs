@@ -26,3 +26,19 @@ test('resolveView: a present id wins; an unknown or missing one falls back to th
 test('resolveView with no sections is the empty string (shell off)', () => {
   assert.equal(resolveView('tours', []), ''); assert.equal(resolveView(undefined, []), '');
 });
+
+// ---- M5a: the Homes section ----
+const U = [{ id: '2l' }], tours = [{ id: 't' }];
+test('Homes: experience + plans + loaded units => masterplan, homes, tours (in that order)', () => {
+  assert.deepEqual(ids(resolveSections({ experience: true, plans: true }, { units: U, tours })), ['masterplan', 'homes', 'tours']);
+  assert.equal(resolveSections({ experience: true, plans: true }, { units: U }).find(s => s.id === 'homes').label, 'Homes');
+});
+test('Homes needs all three: plans without experience is nothing; no plans, or no loaded units, omits it', () => {
+  assert.deepEqual(resolveSections({ experience: false, plans: true }, { units: U, tours }), []);
+  assert.deepEqual(ids(resolveSections({ experience: true, plans: false }, { units: U, tours })), ['masterplan', 'tours']);
+  for (const units of [undefined, [], null, 'x']) assert.deepEqual(ids(resolveSections({ experience: true, plans: true }, { units, tours })), ['masterplan', 'tours'], String(units));
+});
+test('resolveView accepts homes when present and falls back otherwise', () => {
+  const on = resolveSections({ experience: true, plans: true }, { units: U }), off = resolveSections({ experience: true }, { units: U });
+  assert.equal(resolveView('homes', on), 'homes'); assert.equal(resolveView('homes', off), 'masterplan');
+});

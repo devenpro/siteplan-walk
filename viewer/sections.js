@@ -3,6 +3,7 @@ export const DEFAULT_VIEW = 'masterplan';
 export function resolveSections(flags, site) {
   if (!flags || flags.experience !== true) return [];
   const list = [{ id: 'masterplan', label: 'Master plan' }];
+  if (flags.plans === true && site && Array.isArray(site.units) && site.units.length) list.push({ id: 'homes', label: 'Homes' });   // M5a: needs the loaded, validated units
   if (site && Array.isArray(site.tours) && site.tours.length) list.push({ id: 'tours', label: 'Tours' });
   return list;
 }
