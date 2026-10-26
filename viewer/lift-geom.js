@@ -24,11 +24,11 @@ export function liftBoxes(unit, opts = LIFT) {
 export function roomAt(unit, x, z, g = LIFT.inset) {
   return unit.rooms.findIndex(r => x > r.x + g && x < r.x + r.w - g && z > r.y + g && z < r.y + r.h - g);
 }
-export const labelledRooms = unit => unit.rooms.map((r, i) => (Math.min(r.w, r.h) >= 1.1 ? i : -1)).filter(i => i >= 0);
-// Camera for the lifted unit around the origin (the group is centred on the extent). radius fits 92% of a sphere around the unit into the narrower of the two half-angles of the view. Pass camera.aspect (on a phone the sheet offset makes it much narrower than the visible area looks).
+export const labelledRooms = (unit, minSide = 1.1) => unit.rooms.map((r, i) => (Math.min(r.w, r.h) >= minSide ? i : -1)).filter(i => i >= 0);   // phones pass a larger minSide: their labels collide first
+// Camera for the lifted unit around the origin (the group is centred on the extent). radius fits a sphere around the unit (with a 2% margin) into the narrower of the two half-angles of the view. Pass camera.aspect (on a phone the sheet offset makes it much narrower than the visible area looks).
 export function liftView(unit, aspect, fovDeg = 42) {
   const e = unitExtent(unit), half = Math.hypot(e.w, e.h) / 2, narrow = Math.atan(Math.tan((fovDeg * Math.PI) / 360) * Math.min(1, aspect));
-  const radius = (0.92 * half) / Math.sin(narrow);   // the flat plan in an iso view is never as wide as its bounding sphere
+  const radius = (1.02 * half) / Math.sin(narrow);   // the whole bounding sphere plus a hair: the live phone shots clipped 2L at 92%
   return { radius, phiDeg: 55, thetaDeg: aspect >= 0.8 ? 35 : 20, targetY: 0.4, minDistance: 0.35 * radius, maxDistance: 2.2 * radius };
 }
 // Slow-device fallback (the lift's own tier gate): frame times in ms while the lift is on screen; the first `warmup` frames (shader compile, first upload) are ignored.

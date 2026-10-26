@@ -556,7 +556,7 @@ function enterLift(unit) {
   liftSaved = { minDistance: controls.minDistance, maxDistance: controls.maxDistance, minPolarAngle: controls.minPolarAngle, maxPolarAngle: controls.maxPolarAngle, enablePan: controls.enablePan, zoomToCursor: controls.zoomToCursor };
   const v = liftMods[1].liftView(unit, camera.aspect);
   Object.assign(controls, { minDistance: v.minDistance, maxDistance: v.maxDistance, minPolarAngle: toRad(15), maxPolarAngle: toRad(75), enablePan: false, zoomToCursor: false });
-  lift.enter(unit, { snap: REDUCED });
+  lift.enter(unit, { snap: REDUCED, minLabelSide: isPhone() ? 1.6 : 1.1 });   // phone labels are small and the model is too: only name the rooms that can hold a name
   const to = liftViewNow(); if (REDUCED) applyView(to); else { applyView({ ...to, phi: toRad(8) }); flyTo(to, 1100); }   // start looking straight down at the flat plan, then tilt as the rooms rise
   if (isPhone()) panel.classList.add('collapsed');
   $('#liftTitle').textContent = `${unit.type} · ${unit.plan}`; $('#liftRoom').textContent = LIFT_HINT; liftBar.hidden = false;

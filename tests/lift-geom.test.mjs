@@ -63,6 +63,8 @@ test('labelledRooms excludes rooms narrower than 1.1 m and keeps the rest in dat
   const u = mk([{ name: 'A', x: 0, y: 0, w: 3, h: 3 }, { name: 'Slim', x: 3, y: 0, w: 1.0, h: 3 }, { name: 'B', x: 4, y: 0, w: 1.1, h: 3 }, { name: 'Low', x: 5.1, y: 0, w: 3, h: 1.09 }]);
   assert.deepEqual(labelledRooms(u), [0, 2]);
   assert.ok(labelledRooms(byId('2l')).length >= 5);
+  assert.deepEqual(labelledRooms(u, 3.5), [], 'a larger threshold (phones) drops the small rooms; the tap readout still names them');
+  assert.ok(labelledRooms(byId('3p'), 1.6).length < labelledRooms(byId('3p')).length && labelledRooms(byId('3p'), 1.6).length >= 5);
 });
 
 test('liftView grows with the unit, grows when the aspect narrows, and min/max bracket the radius', () => {
@@ -78,8 +80,8 @@ test('liftView fits the unit sphere inside the narrower field of view (seen on a
   for (const id of ['1c', '2l', '3g', '3p', '3s']) for (const aspect of [0.45, 0.66, 1, 1.8]) {
     const u = byId(id), e = { w: Math.max(...u.rooms.map(r => r.x + r.w)), h: Math.max(...u.rooms.map(r => r.y + r.h)) }, half = Math.hypot(e.w, e.h) / 2;
     const narrow = Math.atan(Math.tan((42 * Math.PI) / 360) * Math.min(1, aspect)), v = liftView(u, aspect);
-    const fit = (v.radius * Math.sin(narrow)) / half;   // 1 = the unit's bounding sphere touches the edge; the iso view of a flat plan is never wider than ~0.9 of it
-    assert.ok(fit >= 0.9 - 1e-9 && fit <= 0.95, `${id} @ ${aspect}: the half-diagonal takes ${(fit * 100).toFixed(0)}% of the narrow half-view`);
+    const fit = (v.radius * Math.sin(narrow)) / half;   // 1 = the unit's bounding sphere just touches the edge of the narrow view
+    assert.ok(fit >= 0.99 && fit <= 1.05, `${id} @ ${aspect}: the half-diagonal takes ${(fit * 100).toFixed(0)}% of the narrow half-view (live shot: 92% clipped 2L at the right edge on a 390 px phone)`);
   }
 });
 

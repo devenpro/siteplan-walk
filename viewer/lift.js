@@ -20,7 +20,7 @@ export function createLift({ scene, tier }) {
     const merged = mergeGeometries(parts, false); parts.forEach(g => g.dispose()); return merged;
   };
   const label = (text, x, y, z, cls) => { const el = document.createElement('div'); el.className = 'liftlab' + (cls ? ' ' + cls : ''); el.textContent = text; const o = new CSS2DObject(el); o.position.set(x, y, z); model.add(o); labels.push(o); return o; };
-  function enter(u, { snap = false } = {}) {
+  function enter(u, { snap = false, minLabelSide = 1.1 } = {}) {
     exit(); unit = u; ext = unitExtent(u);
     const boxes = liftBoxes(u), shadows = !!(tier.lift && tier.lift.shadows);
     group = new THREE.Group(); group.name = 'lift';
@@ -35,7 +35,7 @@ export function createLift({ scene, tier }) {
       wedge.position.set(u.entry.x, LIFT.floorTop + 0.03, u.entry.y); wedge.rotation.y = ENTRY_ROT[u.entry.dir] ?? 0; model.add(wedge);
       label('ENTRY', u.entry.x, LIFT.floorTop + 0.55, u.entry.y, 'entry');
     }
-    for (const i of labelledRooms(u)) { const r = u.rooms[i]; label(r.name, r.x + r.w / 2, LIFT.floorTop + 0.25, r.y + r.h / 2); }
+    for (const i of labelledRooms(u, minLabelSide)) { const r = u.rooms[i]; label(r.name, r.x + r.w / 2, LIFT.floorTop + 0.25, r.y + r.h / 2); }
     marker = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 1), new THREE.MeshStandardMaterial({ color: 0xc8772a, roughness: 0.6 })); marker.visible = false; model.add(marker);
     scene.add(group);
     rise = !snap; k = snap ? 1 : 0; t0 = null; model.scale.y = snap ? 1 : 1e-3;

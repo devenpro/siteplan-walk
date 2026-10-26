@@ -115,11 +115,12 @@ export async function m5bChecks(b, url, ok, wire) {
   // 7. phone: the sheet gives way to the model, the bar sits above it and its button is tappable; nothing scrolls sideways
   const phone = await run(async () => {
     const r = {}; for (const [w, h] of [[390, 780], [320, 640]]) {
-      const a = await open({ hash: '#plan=3p', width: w, height: h }); await enter(a.pg); await a.pg.waitForTimeout(1800);
+      const a = await open({ hash: '#plan=3p', width: w, height: h }); await enter(a.pg);
+      { let last = null, same = 0; for (let i = 0; i < 50 && same < 3; i++) { const t = await a.pg.evaluate(() => document.getElementById('panel').getBoundingClientRect().top); same = t === last ? same + 1 : 0; last = t; await a.pg.waitForTimeout(200); } }   // the sheet slides down over 0.35 s on a slow renderer: measure only once it has stopped
       r[w] = await a.pg.evaluate(() => { const bar = document.getElementById('liftBar'), back = document.getElementById('liftBack'), panel = document.getElementById('panel'), bb = bar.getBoundingClientRect(), pb = panel.getBoundingClientRect(), k = back.getBoundingClientRect(), hit = document.elementFromPoint(k.x + k.width / 2, k.y + k.height / 2);
         return { collapsed: panel.classList.contains('collapsed'), barShown: bar.checkVisibility(), aboveSheet: bb.bottom <= pb.top + 1, tappable: hit === back || back.contains(hit), overflowX: document.documentElement.scrollWidth - window.innerWidth, labels: document.querySelectorAll('.liftlab').length, w: Math.round(bb.width) }; });
       await a.ctx.close(); }
     return r; });
-  ok('M5b phone (390 and 320 px): entering 3D collapses the sheet, the bar is shown above it with a tappable "2D plan" button, labels are present and the page does not scroll sideways', !phone.error && [390, 320].every(w => phone[w] && phone[w].collapsed && phone[w].barShown && phone[w].aboveSheet && phone[w].tappable && phone[w].overflowX <= 0 && phone[w].labels > 5), JSON.stringify(phone));
+  ok('M5b phone (390 and 320 px): entering 3D collapses the sheet, the bar is shown above it with a tappable "2D plan" button, only rooms at least 1.6 m across carry a name label (plus ENTRY) and the page does not scroll sideways', !phone.error && [390, 320].every(w => phone[w] && phone[w].collapsed && phone[w].barShown && phone[w].aboveSheet && phone[w].tappable && phone[w].overflowX <= 0 && phone[w].labels === labelledRooms(unitOf('3p'), 1.6).length + 1), JSON.stringify(phone));
   }
 }
