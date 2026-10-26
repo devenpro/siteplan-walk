@@ -29,12 +29,24 @@ Then read `docs/adding-a-project.md` to put your own site plan in — a new proj
 ## Layout
 
 ```
-viewer/            index.html, app.js, quality.js, sky.js, facade.js, facade-geom.js, style.css  — the Three.js viewer (ES modules from jsDelivr, no build step)
+viewer/            index.html, app.js, quality.js, sky.js, facade.js, facade-geom.js, style.css (+ flags/hash/geo/sections/units/plans/plan-svg/lift/lift-geom for the flag-gated arc 3 modules)  — the Three.js viewer (ES modules from jsDelivr, no build step)
 projects/<slug>/   site.json (everything about one project), plan.jpg (ground), postcards/ (+ manifest.json, ai-log.json), source/ (originals + PROVENANCE.md), og.jpg
 tools/             trace.html (tracer), make-ground.mjs, make-postcards.mjs, import-ai.mjs, deploy.sh, check.mjs, shoot.mjs, crop.mjs
 docs/              adding-a-project.md (your own plan, step by step), hosting.md (CreatiSoul's deployment), superpowers/specs + plans (the approved designs), pitch/ (screenshot set), checkpoints/ (per-sub-phase evidence)
 tests/             node --test unit tests for the pure viewer modules (quality.js)
 ```
+
+## Arc 3 modules (flags, all default off)
+
+New viewing-experience modules are flag-gated: set `flags` in `site.json` (`{ "experience": true, "plans": true, "lift": true }`) or try them on any URL with `?mods=experience,plans,lift`; `?mods=none` forces everything off. With every flag off the page is byte-for-byte what it was before (no extra DOM, no extra requests).
+
+| Flag | Needs | What it adds |
+|---|---|---|
+| `experience` | | Section tab row (Master plan, Homes, Tours) and `#view=` deep links; the phone sheet grows by the tab row |
+| `plans` | `experience`, `site.unitsFile` | Homes view: a card per unit type, plan detail with rooms, sizes and the developer's published areas, tap-a-room, same-scale compare; `#plan=<id>` deep links |
+| `lift` | `plans` | "View in 3D" on an open plan: the rooms rise into an orbitable low-wall model in the same canvas (floors, thin walls, room names, an entry wedge, tap a room for its size). Honest label: "Indicative 3D from published plans · rooms only; walls, doors and finishes are not shown". Slow devices fall back to the 2D plan (`?liftguard=1` forces that gate for a check) |
+
+Unit data lives in `projects/<slug>/units.json` (rectangles in metres, no prices, no availability). `context`, `location`, `presenter`, `connect` and `walkin` are reserved for later modules.
 
 ## Commands
 

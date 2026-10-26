@@ -1,7 +1,7 @@
 // Live checks for a deployed/served viewer. usage: node tools/check.mjs <viewer url with ?project=… or a deployed project url>
 import { chromium } from 'playwright';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { RANK } from '../viewer/media-kinds.js'; import { hasAudio } from './media-lib.mjs'; import { m1Checks } from './m1-checks.mjs'; import { m5aChecks } from './m5a-checks.mjs';
+import { RANK } from '../viewer/media-kinds.js'; import { hasAudio } from './media-lib.mjs'; import { m1Checks } from './m1-checks.mjs'; import { m5aChecks } from './m5a-checks.mjs'; import { m5bChecks } from './m5b-checks.mjs';
 const url = process.argv[2]; if (!url) { console.error('usage: node tools/check.mjs <url>'); process.exit(2); }
 const results = []; const ok = (name, pass, info = '') => { results.push({ name, pass, info }); console.log((pass ? 'PASS' : 'FAIL') + '  ' + name + (info ? '  — ' + info : '')); };
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -130,7 +130,7 @@ let gateYes = null, narrated = null;
 ok('autoplay: in a plain context the loop plays muted inline (currentTime advances within 20 s), moving on releases its decoder, deselect clears the strip', !!gateYes && (gateYes.skipped || (gateYes.playing && gateYes.currentTime > 0.2 && gateYes.srcAfterGo === false && gateYes.stripEmpty)), JSON.stringify(gateYes));
 ok('narrated clip: plays muted with Listen, loop off; end → held on the last frame with Replay; Replay restarts; Listen unmutes + restarts; moving on mutes again', !!narrated && (narrated.skipped || (narrated.vLoop === false && narrated.muted && narrated.listenShown && narrated.replayHidden && narrated.ended && narrated.heldPaused && narrated.replayShown && narrated.playingAfterEnd === false && narrated.replayed && narrated.replayHiddenAgain && narrated.listen.muted === false && narrated.listen.restarted && narrated.listen.label === 'Mute' && narrated.afterGo.muted && narrated.afterGo.label === 'Listen')), JSON.stringify(narrated));
 ok('GTAO changes the high-tier frame (A/B: AO pass on vs off — > 1 % of pixels move by > 6 levels, mean |Δ| < 40)', !!aoDiff && aoDiff.changed > 0.01 && aoDiff.meanAbsDiff < 40, JSON.stringify(aoDiff));
-await m1Checks(b, url, ok, wire); await m5aChecks(b, url, ok, wire);   // arc 3 / M1: flag-off regression, section shell, deep links, phone sheet, georef
+await m1Checks(b, url, ok, wire); await m5aChecks(b, url, ok, wire); await m5bChecks(b, url, ok, wire);   // arc 3 / M1: flag-off regression, section shell, deep links, phone sheet, georef
 ok('no shader compile errors on any tier', !errs.some(e => /Shader Error|WebGLProgram|WebGLShader|GLSL/i.test(e)), errs.filter(e => /Shader|GLSL/i.test(e)).slice(0, 3).join(' | '));
 ok('zero console errors / failed requests', errs.length === 0, errs.slice(0, 5).join(' | '));
 await b.close();
