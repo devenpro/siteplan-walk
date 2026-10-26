@@ -566,6 +566,7 @@ function exitLift() {
   if (!lifted) return; lifted = false; lift.exit(); document.documentElement.classList.remove('lifted');
   for (const [c, vis] of hiddenWorld) c.visible = vis; hiddenWorld = null;
   Object.assign(controls, liftSaved); liftSaved = null; liftBar.hidden = true; liftUnit = null;
+  if (isPhone() && plans && plans.openId) panel.classList.remove('collapsed');   // "2D plan" (or the slow-device fallback) must show the plan again, not an empty tab row; a tour or hotspot that triggered the exit re-collapses or re-manages the sheet itself
   if (!tour) { if (REDUCED) applyView(fitView()); else flyTo(fitView(), 1000); }   // a tour that just started owns the camera
   dirty = true; dirtyUntil = performance.now() + 3000;
 }

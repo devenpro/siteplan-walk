@@ -98,3 +98,16 @@ test('shouldFallback: false until enough frames, false when smooth, true when sl
   assert.equal(shouldFallback([...rep(8, 400), ...rep(52, 16)]), false, 'warm-up ignored');
   assert.equal(shouldFallback(rep(60, 45)), false, 'exactly at the limit is fine'); assert.equal(shouldFallback(rep(60, 46)), true);
 });
+
+test('shouldFallback: one stalled frame (a notification, a tab switch) does not condemn a smooth device, a run of slow frames still does (review finding 1)', () => {
+  const smooth = Array(60).fill(16);
+  assert.equal(shouldFallback([...smooth.slice(0, 30), 1500, ...smooth.slice(31)]), false, 'one 1.5 s stall among 60 smooth frames');
+  assert.equal(shouldFallback([...smooth.slice(0, 30), 1500, 1500, 1500, ...smooth.slice(33)]), false, 'three stalls in a row are still a hiccup, not a slow device');
+  assert.equal(shouldFallback(Array(60).fill(1000)), true, 'the ~1 fps software renderer is still caught');
+});
+
+test('the overlay meshes (entry wedge, tapped-room marker) share no horizontal plane with each other or the floor (review finding 2: the wedge and the marker both topped out at 0.17)', () => {
+  const planes = [['floorTop', LIFT.floorTop], ['wedge y0', LIFT.overlay.wedge[0]], ['wedge y1', LIFT.overlay.wedge[1]], ['marker y0', LIFT.overlay.marker[0]], ['marker y1', LIFT.overlay.marker[1]]];
+  for (let i = 0; i < planes.length; i++) for (let j = i + 1; j < planes.length; j++) assert.ok(Math.abs(planes[i][1] - planes[j][1]) >= 0.005, `${planes[i][0]} = ${planes[i][1]} and ${planes[j][0]} = ${planes[j][1]} are coplanar`);
+  assert.ok(LIFT.overlay.wedge[0] > LIFT.floorTop && LIFT.overlay.marker[0] > LIFT.floorTop, 'both float above the floor top');
+});

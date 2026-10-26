@@ -31,12 +31,12 @@ export function createLift({ scene, tier }) {
     const R = 0.6 * Math.hypot(ext.w, ext.h), ped = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 1.2, 64), new THREE.MeshStandardMaterial({ color: 0xd8d0c2, roughness: 0.95 }));
     ped.position.y = -0.06 - 0.6; ped.receiveShadow = shadows; group.add(ped);   // top at -0.06: never coplanar with the floor feet
     if (u.entry) {
-      const wedge = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.04, 3), new THREE.MeshStandardMaterial({ color: 0xd9622b, roughness: 0.7 }));
-      wedge.position.set(u.entry.x, LIFT.floorTop + 0.03, u.entry.y); wedge.rotation.y = ENTRY_ROT[u.entry.dir] ?? 0; model.add(wedge);
+      const wedge = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, LIFT.overlay.wedge[1] - LIFT.overlay.wedge[0], 3), new THREE.MeshStandardMaterial({ color: 0xd9622b, roughness: 0.7 }));
+      wedge.position.set(u.entry.x, (LIFT.overlay.wedge[0] + LIFT.overlay.wedge[1]) / 2, u.entry.y); wedge.rotation.y = ENTRY_ROT[u.entry.dir] ?? 0; model.add(wedge);
       label('ENTRY', u.entry.x, LIFT.floorTop + 0.55, u.entry.y, 'entry');
     }
     for (const i of labelledRooms(u, minLabelSide)) { const r = u.rooms[i]; label(r.name, r.x + r.w / 2, LIFT.floorTop + 0.25, r.y + r.h / 2); }
-    marker = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 1), new THREE.MeshStandardMaterial({ color: 0xc8772a, roughness: 0.6 })); marker.visible = false; model.add(marker);
+    marker = new THREE.Mesh(new THREE.BoxGeometry(1, LIFT.overlay.marker[1] - LIFT.overlay.marker[0], 1), new THREE.MeshStandardMaterial({ color: 0xc8772a, roughness: 0.6 })); marker.visible = false; model.add(marker);
     scene.add(group);
     rise = !snap; k = snap ? 1 : 0; t0 = null; model.scale.y = snap ? 1 : 1e-3;
   }
@@ -55,7 +55,7 @@ export function createLift({ scene, tier }) {
     if (!marker) return;
     const r = i >= 0 && unit.rooms[i]; if (!r) { marker.visible = false; return; }
     const inset = LIFT.inset + LIFT.wall;
-    marker.scale.set(Math.max(0.1, r.w - 2 * inset), 1, Math.max(0.1, r.h - 2 * inset)); marker.position.set(r.x + r.w / 2, LIFT.floorTop + 0.035, r.y + r.h / 2); marker.visible = true;
+    marker.scale.set(Math.max(0.1, r.w - 2 * inset), 1, Math.max(0.1, r.h - 2 * inset)); marker.position.set(r.x + r.w / 2, (LIFT.overlay.marker[0] + LIFT.overlay.marker[1]) / 2, r.y + r.h / 2); marker.visible = true;
   }
   function exit() {
     if (!group) return;

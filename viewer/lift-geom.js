@@ -1,7 +1,7 @@
 // The isometric lift's pure parts (arc 3, M5b): boxes for the low-wall model, room picking, label choice and camera fit. No Three, no DOM.
 // Plan metres: x right, z = plan y (down), unit-local origin = the plan's top-left. The Three side (lift.js) only turns these boxes into meshes.
 import { unitExtent } from './plan-svg.js';
-export const LIFT = { inset: 0.03, wall: 0.1, floorTop: 0.12, floorBottom: 0.02, heights: { room: 1.1, wet: 1.1, out: 0.5 } };
+export const LIFT = { inset: 0.03, wall: 0.1, floorTop: 0.12, floorBottom: 0.02, heights: { room: 1.1, wet: 1.1, out: 0.5 }, overlay: { wedge: [0.14, 0.18], marker: [0.13, 0.16] } };   // overlay: y ranges of the entry wedge and the tapped-room marker; no two horizontal faces share a height (they would flicker where they overlap)
 export const LIFT_LABEL = 'Indicative 3D from published plans · rooms only; walls, doors and finishes are not shown';
 // Each room: a floor slab and four thin walls, all inset from the room rectangle so neighbouring rooms never share a plane (a shared plane flickers on phones).
 // The floor sits half inside the wall band, so its sides are hidden in the walls; it starts above y = 0 so its underside is not coplanar with the walls' feet.
@@ -35,5 +35,5 @@ export function liftView(unit, aspect, fovDeg = 42) {
 export function shouldFallback(frameMs, { warmup = 8, minSamples = 40, limitMs = 45 } = {}) {
   if (frameMs.length < warmup + minSamples) return false;
   const s = frameMs.slice(warmup);
-  return s.reduce((a, b) => a + b, 0) / s.length > limitMs;
+  return s.reduce((a, b) => a + Math.min(b, 250), 0) / s.length > limitMs;   // a single stalled frame (notification, tab switch) must not condemn the device: each frame counts for at most 250 ms
 }
