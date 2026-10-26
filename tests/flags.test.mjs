@@ -33,3 +33,9 @@ test('undefined site and an empty or odd search do not throw', () => {
   assert.ok(allOff(resolveFlags(null, undefined)));
   assert.ok(allOff(resolveFlags({ flags: null }, '?q=low&mods=')));
 });
+test('M5b: lift is a module, default off, on by ?mods or site.flags, off by ?mods=none', () => {
+  assert.ok(MODULES.includes('lift')); assert.equal(resolveFlags({}, '').lift, false);
+  assert.equal(resolveFlags({}, '?mods=experience,plans,lift').lift, true);
+  assert.equal(resolveFlags({ flags: { lift: true } }, '').lift, true);
+  assert.equal(resolveFlags({ flags: { lift: true } }, '?mods=none').lift, false);
+});

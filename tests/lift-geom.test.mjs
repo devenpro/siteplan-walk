@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LIFT, LIFT_LABEL, liftBoxes, roomAt, labelledRooms, liftView } from '../viewer/lift-geom.js';
+import { LIFT, LIFT_LABEL, liftBoxes, roomAt, labelledRooms, liftView, shouldFallback } from '../viewer/lift-geom.js';
 
 const real = JSON.parse(fs.readFileSync(new URL('../projects/belvedere/units.json', import.meta.url), 'utf8')).units;
 const byId = id => real.find(u => u.id === id);
@@ -77,4 +77,13 @@ test('liftView grows with the unit, grows when the aspect narrows, and min/max b
 test('LIFT_LABEL has the exact R3 text and no price word', () => {
   assert.equal(LIFT_LABEL, 'Indicative 3D from published plans · rooms only; walls, doors and finishes are not shown');
   assert.doesNotMatch(LIFT_LABEL, /₹|price|lakh|crore/i);
+});
+
+test('shouldFallback: false until enough frames, false when smooth, true when slow, and a slow warm-up is ignored', () => {
+  const rep = (n, ms) => Array(n).fill(ms);
+  assert.equal(shouldFallback(rep(30, 500)), false, 'too few samples');
+  assert.equal(shouldFallback(rep(60, 16)), false, 'smooth');
+  assert.equal(shouldFallback(rep(60, 80)), true, 'slow');
+  assert.equal(shouldFallback([...rep(8, 400), ...rep(52, 16)]), false, 'warm-up ignored');
+  assert.equal(shouldFallback(rep(60, 45)), false, 'exactly at the limit is fine'); assert.equal(shouldFallback(rep(60, 46)), true);
 });

@@ -31,3 +31,9 @@ export function liftView(unit, aspect, fovDeg = 42) {
   const radius = (0.9 * half) / sin / Math.min(1, aspect);
   return { radius, phiDeg: 55, thetaDeg: aspect >= 0.8 ? 35 : 20, targetY: 0.4, minDistance: 0.35 * radius, maxDistance: 2.2 * radius };
 }
+// Slow-device fallback (the lift's own tier gate): frame times in ms while the lift is on screen; the first `warmup` frames (shader compile, first upload) are ignored.
+export function shouldFallback(frameMs, { warmup = 8, minSamples = 40, limitMs = 45 } = {}) {
+  if (frameMs.length < warmup + minSamples) return false;
+  const s = frameMs.slice(warmup);
+  return s.reduce((a, b) => a + b, 0) / s.length > limitMs;
+}

@@ -46,3 +46,8 @@ test('B4: log depth off only on high (the AO pass reads linear depth); shadow ma
   assert.equal(TIERS.high.composer, true); assert.equal(TIERS.mid.composer, false); assert.equal(TIERS.low.composer, false);
   assert.equal(TIERS.high.near, 3); assert.equal(TIERS.mid.near, 2); assert.equal(TIERS.low.near, 2);
 });
+
+test('M5b: every tier has a lift setting; the lifted model casts shadows on high and mid, not on the check tier', () => {
+  for (const [name, t] of Object.entries(TIERS)) assert.equal(typeof t.lift.shadows, 'boolean', name + '.lift.shadows');
+  assert.equal(TIERS.high.lift.shadows, true); assert.equal(TIERS.mid.lift.shadows, true); assert.equal(TIERS.low.lift.shadows, false);
+});

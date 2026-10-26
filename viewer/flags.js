@@ -1,6 +1,6 @@
 // Arc-3 module flags. Every module defaults OFF so a dataset (and First Line's W1 host) sees no change until it opts in.
 // Turn one on in site.json `flags: { experience: true }` or with `?mods=experience,context`; `?mods=none` forces everything off (flag-off regression runs).
-export const MODULES = ['experience', 'context', 'location', 'plans', 'presenter', 'connect', 'walkin'];
+export const MODULES = ['experience', 'context', 'location', 'plans', 'lift', 'presenter', 'connect', 'walkin'];
 export function resolveFlags(site, search) {
   const flags = Object.fromEntries(MODULES.map(m => [m, false]));
   const fromSite = site && site.flags;
