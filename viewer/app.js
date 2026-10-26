@@ -32,7 +32,10 @@ const site = await (await fetch(BASE + 'site.json')).json();
 const FLAGS = resolveFlags(site, location.search);
 document.documentElement.classList.toggle('exp', FLAGS.experience);
 if (FLAGS.experience && FLAGS.plans && site.unitsFile) site.units = await loadUnits(BASE + site.unitsFile);   // M5a: only fetched when the Homes view can show; [] on any failure
+const liftMods = FLAGS.lift && FLAGS.plans && FLAGS.experience && site.units && site.units.length ? await Promise.all([import('./lift.js'), import('./lift-geom.js')]) : null;   // M5b: the isometric lift's modules are only fetched when its flag is on
 let plans = null;   // the Homes view controller (viewer/plans.js), or null when the section is absent
+let lift = null, lifted = false, liftUnit = null, liftSaved = null, hiddenWorld = null, liftBar = null, liftBroken = false;   // M5b: the lift controller, whether it is showing, and what to restore when it ends
+const liftSamples = [], REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SECTIONS = resolveSections(FLAGS, site);
 let view = '';   // current section view id; '' when the shell is off
 const hashState = parseHash(location.hash);
@@ -352,8 +355,8 @@ $('#introDisc').textContent = site.disclaimer || '';
 { const vl = resolveVizLabel(site), el = $('#vizLabel'); el.textContent = vl; el.hidden = !vl; }   // persistent visualisation label (site.visualisationLabel)
 const northRad = THREE.MathUtils.degToRad(site.plan.northDeg ?? 0), northVec = new THREE.Vector3(Math.sin(northRad), 0, -Math.cos(northRad)), needle = $('#compass .needle');
 function updateCompass() { const a = Math.atan2(northVec.x, -northVec.z) + controls.getAzimuthalAngle(); needle.style.transform = `rotate(${THREE.MathUtils.radToDeg(a).toFixed(1)}deg)`; }
-$('#btnReset').addEventListener('click', () => flyTo(fitView(), 1400));
-window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (tour) endTour(true); else { deselect(); flyTo(fitView(), 1400); } } });
+$('#btnReset').addEventListener('click', () => flyTo(lifted ? liftViewNow() : fitView(), 1400));
+window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (lifted) { plans.setMode('2d'); return; } if (tour) endTour(true); else { deselect(); flyTo(fitView(), 1400); } } });
 window.addEventListener('keydown', e => { if ($('#panelDetail').hidden || ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return; if (e.key === 'ArrowRight') { gallery.go(gallery.index + 1); e.preventDefault(); } if (e.key === 'ArrowLeft') { gallery.go(gallery.index - 1); e.preventDefault(); } });
 const btnLight = $('#btnLight');
 function setLight(mode) { lightTarget = mode === 'dusk' ? 1 : 0; btnLight.textContent = lightTarget ? 'Day' : 'Dusk'; btnLight.setAttribute('aria-pressed', String(!!lightTarget)); }
@@ -394,6 +397,7 @@ ring.rotation.x = -Math.PI / 2; ring.position.y = 0.45; ring.visible = false; sc
 
 const ray = new THREE.Raycaster(); let pinTick = 0; const tmpV = new THREE.Vector3();
 function updatePins(now) {
+  if (lifted) return;   // the pins are hidden by CSS while the lift shows
   const camPos = camera.position;
   if (ring.visible) { const k = 1 + 0.06 * Math.sin(now / 350); ring.scale.set(k, k, 1); }
   const doRay = now - pinTick > 140; if (doRay) pinTick = now;
@@ -451,7 +455,7 @@ $('#btnNext').addEventListener('click', () => step(1)); $('#btnPrev').addEventLi
 canvas.addEventListener('pointerdown', () => { if (isPhone()) panel.classList.add('collapsed'); });
 // double-click / double-tap on the model: fly to that spot
 { let lastTap = 0, lastX = 0, lastY = 0; const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP = new THREE.Vector3(), ndc = new THREE.Vector2();
-  canvas.addEventListener('pointerup', e => { const now = performance.now(), dbl = now - lastTap < 350 && Math.hypot(e.clientX - lastX, e.clientY - lastY) < 24; lastTap = now; lastX = e.clientX; lastY = e.clientY; if (!dbl || tour) return;
+  canvas.addEventListener('pointerup', e => { const now = performance.now(), dbl = now - lastTap < 350 && Math.hypot(e.clientX - lastX, e.clientY - lastY) < 24; lastTap = now; lastX = e.clientX; lastY = e.clientY; if (!dbl || tour || lifted) return;
     const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
     if (ray.ray.intersectPlane(groundPlane, hitP)) { hitP.x = THREE.MathUtils.clamp(hitP.x, bounds.minX - 20, bounds.maxX + 20); hitP.z = THREE.MathUtils.clamp(hitP.z, bounds.minZ - 20, bounds.maxZ + 20); const v = currentView(); flyTo({ radius: Math.min(v.radius, 140), phi: Math.max(v.phi, THREE.MathUtils.degToRad(48)), theta: v.theta, target: new THREE.Vector3(hitP.x, 0, hitP.z) }, 1100); } });
 }
@@ -525,7 +529,8 @@ if (SECTIONS.length) {
   secNav.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (selected) deselect(); if (plans && plans.openId) plans.close(); setView(b.dataset.view); });
   setView(hashState.view, true);
   if (SECTIONS.some(x => x.id === 'homes')) {
-    plans = createPlans({ units: site.units, listEl: $('#homes'), detailEl: $('#panelPlan'), onOpen: (id, opts = {}) => {   // the host owns panel visibility and the URL
+    if (liftMods) { lift = liftMods[0].createLift({ scene, tier: TIER }); mountLiftBar(); }
+    plans = createPlans({ units: site.units, listEl: $('#homes'), detailEl: $('#panelPlan'), lift: !!lift, onLift: u => (u ? enterLift(u) : exitLift()), onOpen: (id, opts = {}) => {   // the host owns panel visibility and the URL
       if (id) { if (tour) endTour(false); if (selected) deselect(); }   // a plan takes over from a running tour and from a selected hotspot (else the next tour keyframe would close it under the reader)
       if (id && view !== 'homes') setView('homes', true);   // a plan belongs to the Homes view (tab + hash), whichever way it was opened
       $('#panelPlan').hidden = !id; $('#panelHome').hidden = !!id; $('#panelDetail').hidden = true; if (id) panel.classList.remove('collapsed');
@@ -533,6 +538,46 @@ if (SECTIONS.length) {
     if (hashState.plan) { setView('homes', true); plans.open(hashState.plan, { silent: true }); }   // a shared #plan= link: Homes view, plan open, URL untouched; an unknown id leaves the list
   }
 }
+
+// ============ isometric lift (M5b, `lift` flag): the plan's rooms as an orbitable low-wall model in this scene ============
+const toRad = THREE.MathUtils.degToRad;
+function liftViewNow() { const v = liftMods[1].liftView(liftUnit, camera.aspect); return { radius: v.radius, phi: toRad(v.phiDeg), theta: toRad(v.thetaDeg), target: new THREE.Vector3(0, v.targetY, 0) }; }
+function mountLiftBar() {
+  liftBar = document.createElement('div'); liftBar.id = 'liftBar'; liftBar.hidden = true;
+  liftBar.innerHTML = '<button id="liftBack" type="button">‹ 2D plan</button><div class="lb-text"><b id="liftTitle"></b><span id="liftRoom" aria-live="polite"></span></div><p id="liftLabel"></p>';
+  $('#tourbar').after(liftBar); $('#liftLabel').textContent = liftMods[1].LIFT_LABEL;
+  $('#liftBack').addEventListener('click', () => plans.setMode('2d'));
+}
+const LIFT_HINT = 'Tap a room for its name and size.';
+function enterLift(unit) {
+  if (lifted || tour || selected) return;
+  liftUnit = unit; lifted = true; liftSamples.length = 0; document.documentElement.classList.add('lifted');
+  hiddenWorld = world.children.filter(c => c !== base).map(c => [c, c.visible]); for (const [c] of hiddenWorld) c.visible = false;   // the table stays; the site goes
+  liftSaved = { minDistance: controls.minDistance, maxDistance: controls.maxDistance, minPolarAngle: controls.minPolarAngle, maxPolarAngle: controls.maxPolarAngle, enablePan: controls.enablePan, zoomToCursor: controls.zoomToCursor };
+  const v = liftMods[1].liftView(unit, camera.aspect);
+  Object.assign(controls, { minDistance: v.minDistance, maxDistance: v.maxDistance, minPolarAngle: toRad(15), maxPolarAngle: toRad(75), enablePan: false, zoomToCursor: false });
+  lift.enter(unit, { snap: REDUCED });
+  const to = liftViewNow(); if (REDUCED) applyView(to); else { applyView({ ...to, phi: toRad(8) }); flyTo(to, 1100); }   // start looking straight down at the flat plan, then tilt as the rooms rise
+  if (isPhone()) panel.classList.add('collapsed');
+  $('#liftTitle').textContent = `${unit.type} · ${unit.plan}`; $('#liftRoom').textContent = LIFT_HINT; liftBar.hidden = false;
+  dirty = true; dirtyUntil = performance.now() + 3000;
+}
+function exitLift() {
+  if (!lifted) return; lifted = false; lift.exit(); document.documentElement.classList.remove('lifted');
+  for (const [c, vis] of hiddenWorld) c.visible = vis; hiddenWorld = null;
+  Object.assign(controls, liftSaved); liftSaved = null; liftBar.hidden = true; liftUnit = null;
+  if (!tour) { if (REDUCED) applyView(fitView()); else flyTo(fitView(), 1000); }   // a tour that just started owns the camera
+  dirty = true; dirtyUntil = performance.now() + 3000;
+}
+{ let down = null;   // a tap (not a drag) on the model names the room under it
+  canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+  canvas.addEventListener('pointerup', e => {
+    const d = down; down = null; if (!lifted || !d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6 || performance.now() - d.t > 350) return;
+    const r = canvas.getBoundingClientRect(), i = lift.pick(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, camera), room = i >= 0 ? liftUnit.rooms[i] : null;
+    lift.select(i); $('#liftRoom').textContent = room ? `${room.name} · ${room.w.toFixed(2)} × ${room.h.toFixed(2)} m · ${(room.w * room.h).toFixed(1)} m²` : LIFT_HINT; dirty = true;
+  });
+}
+const LIFT_GUARD = !!lift && (!q.get('q') || q.get('liftguard') === '1');   // the lift's own tier gate: only when the tier was device-chosen, or forced for a check
 
 // ============ loop ============
 function resize() {
@@ -567,20 +612,24 @@ function noteFrame(now, busy) {
 }
 renderer.setAnimationLoop(now => {
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
-  resize(); stepTween(now); stepTour(dt);
+  resize(); stepTween(now); stepTour(dt); if (lift) lift.frame(now);
   if (Math.abs(lightTarget - lightK) > 0.001) { lightK += Math.sign(lightTarget - lightK) * Math.min(Math.abs(lightTarget - lightK), dt / 1.2); applyLighting(lightK); dirty = true; }
   if (controls.enabled && controls.update()) dirty = true;
   const water = waterInView(); if (water) waterTex.offset.set(now * 0.000012, now * 0.000007);   // ≈0.5 m/s drift across the 38.4 m tile
-  const moving = !!tween || (tour && !tour.paused) || now < dirtyUntil, animating = moving || ring.visible;
+  const moving = !!tween || (tour && !tour.paused) || now < dirtyUntil || (lift && lift.animating), animating = moving || ring.visible;
   if (!dirty && !animating) { if (FX.has('stop') || now - lastRender < (water ? 1000 / TIER.waterFps : 90)) { prevBusy = false; return; } }   // idle: ~11 fps keeps the compositor fed; TIER.waterFps while a pool is on screen
   if (!dirty && !moving && ring.visible && gallery.playing && now - lastRender < 50) { prevBusy = false; return; }   // a loop is playing: the ring pulse drops to 20 fps so the phone's decoder and GPU are not both flat out
-  const busy = dirty || animating; noteFrame(now, busy);
+  const busy = dirty || animating, wasBusy = prevBusy; noteFrame(now, busy);
+  if (lifted && LIFT_GUARD && busy && wasBusy && lastRender) {   // frame times while the lift is on screen; a slow device falls back to the 2D plan
+    liftSamples.push(now - lastRender);
+    if (liftMods[1].shouldFallback(liftSamples)) { liftBroken = true; plans.setMode('2d'); plans.disableLift('3D is not smooth on this device, so you are seeing the 2D plan.'); }
+  }
   dirty = false; lastRender = now;
   renderer.info.reset();
   updateCompass(); updatePins(now); fitShadowToView(); post.render(); labelRenderer.render(scene, camera);
 });
 
-window.__walk = { flags: FLAGS, get plans() { return plans; }, sections: SECTIONS, setView, get view() { return view; }, geo, geoStatus: geo ? (site.geo.status || 'unverified') : null, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
+window.__walk = { flags: FLAGS, get plans() { return plans; }, get lift() { return lift; }, get liftState() { return { lifted, broken: liftBroken, samples: liftSamples.length, guard: LIFT_GUARD, unit: liftUnit && liftUnit.id }; }, sections: SECTIONS, setView, get view() { return view; }, geo, geoStatus: geo ? (site.geo.status || 'unverified') : null, latLonOf: px => geo ? pxToLatLon(geo, px) : null, scene, camera, controls, site, flyTo, fitView, DEFAULT_VIEW, currentView, volumeMeshes, renderer, THREE, treeCount, setLight, select, deselect, setTheme, hotspots, gallery, startTour, endTour, tourState, get tour() { return tour; }, get selected() { return selected; },
   quality: QUALITY, tier: TIER, PRESETS, applyLighting, get lightK() { return lightK; }, sky, plinthTopY: PLINTH_TOP, facades: facadeInfo,
   greenery: { trees: greenery.trees, hedges: greenery.hedges, variants: greenery.variants, lawn: !!greenery.lawnTexture, water: !!waterTex }, hedgeCount: greenery.hedges, waterMeshes,
   post, sun, get shadowFit() { return shadowFit; }, groundAO: { size: groundAO.size, darkened: groundAO.darkened }, autoTier, logDepth: LOG_DEPTH,

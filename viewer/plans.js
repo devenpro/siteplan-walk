@@ -4,13 +4,24 @@ import { planSvg, planViewBox, escapeXml as esc } from './plan-svg.js';
 import { unitById } from './units.js';
 export const PLAN_LABEL = "Indicative layout from published plans · areas are the developer's published figures";
 const nf = n => Number(n).toLocaleString('en-IN');
-export function createPlans({ units, listEl, detailEl, onOpen = () => {} }) {
+export function createPlans({ units, listEl, detailEl, onOpen = () => {}, lift = false, onLift = () => {} }) {
   const q = sel => detailEl.querySelector(sel), head = q('#planHead'), stage = q('#planSvg'), room = q('#planRoom'), facts = q('#planFacts'), chips = q('#planCompare .chips'), label = q('#planLabel');
-  let openId = null, compareId = null, active = null;   // active = { id, i }: the tapped room
+  let openId = null, compareId = null, active = null, mode = '2d', liftOn = !!lift, liftBtn = null;   // active = { id, i }: the tapped room; mode: '2d' | '3d' (M5b, only with the `lift` option)
   const beds = u => `${u.beds} bed · ${u.baths} bath`;
   listEl.innerHTML = `<p class="homes-note">${esc(PLAN_LABEL)}</p><div class="homes-grid">` + units.map(u =>
     `<button class="unitcard" type="button" data-id="${esc(u.id)}"><span class="uc-plan">${planSvg(u, { mini: true })}</span><span class="uc-t"><b>${esc(u.type)}</b> ${esc(u.plan)}</span><span class="uc-m">${nf(u.sba)} sq ft · ${beds(u)}</span></button>`).join('') + '</div>';
   label.textContent = PLAN_LABEL;
+  if (liftOn) {   // M5b: the 3D button exists only when the host turned the lift on
+    liftBtn = document.createElement('button'); liftBtn.id = 'planLift'; liftBtn.className = 'plan-lift'; liftBtn.type = 'button'; liftBtn.textContent = 'View in 3D'; liftBtn.setAttribute('aria-pressed', 'false');
+    stage.insertAdjacentElement('afterend', liftBtn); liftBtn.addEventListener('click', () => setMode(mode === '3d' ? '2d' : '3d'));
+  }
+  function leave3d() { if (mode !== '3d') return; mode = '2d'; if (liftBtn) { liftBtn.textContent = 'View in 3D'; liftBtn.setAttribute('aria-pressed', 'false'); } onLift(null); }   // also for a silent close: silent means no DOM or hash work, not "stay lifted"
+  function setMode(m) {
+    if (!liftOn || !openId) return;
+    if (m === '2d') return leave3d();
+    if (m === '3d' && mode !== '3d') { mode = '3d'; liftBtn.textContent = 'Back to 2D plan'; liftBtn.setAttribute('aria-pressed', 'true'); onLift(unitById(units, openId)); }
+  }
+  function disableLift(note) { leave3d(); liftOn = false; if (liftBtn) { liftBtn.remove(); liftBtn = null; } room.textContent = note; }
   function render() {
     const u = unitById(units, openId); if (!u) return;
     const cmp = unitById(units, compareId), list = cmp ? [u, cmp] : [u];
@@ -26,15 +37,17 @@ export function createPlans({ units, listEl, detailEl, onOpen = () => {} }) {
   }
   function open(id, opts = {}) {
     const u = unitById(units, id); if (!u) return false;
+    leave3d();
     onOpen(u.id, opts);   // first: the host may end a tour / clear a hotspot (which closes any plan), so state is set only after it has settled
     openId = u.id; compareId = null; active = null; render(); return true;
   }
   function close(opts = {}) {
-    if (!openId) return; openId = compareId = null; active = null;
+    if (!openId) return; leave3d(); openId = compareId = null; active = null;
     if (!opts.silent) onOpen(null, opts);
   }
   function compare(id) {
     if (!openId) return;
+    leave3d();   // compare is a 2D feature
     if (id === openId || !unitById(units, id)) return;   // comparing a type with itself or an unknown one is a no-op
     compareId = id === compareId ? null : id; active = null; render();
   }
@@ -46,5 +59,5 @@ export function createPlans({ units, listEl, detailEl, onOpen = () => {} }) {
     active = { id: fig.dataset.id, i: +rect.dataset.i }; render();
   });
   addEventListener('resize', () => { if (openId) render(); });
-  return { open, close, compare, render, get openId() { return openId; }, get compareId() { return compareId; } };
+  return { open, close, compare, render, setMode, disableLift, get mode() { return mode; }, get openId() { return openId; }, get compareId() { return compareId; } };
 }

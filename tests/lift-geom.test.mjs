@@ -74,6 +74,15 @@ test('liftView grows with the unit, grows when the aspect narrows, and min/max b
   assert.equal(liftView(byId('2l'), 1.5).thetaDeg, 35); assert.equal(liftView(byId('2l'), 0.5).thetaDeg, 20);
 });
 
+test('liftView fits the unit sphere inside the narrower field of view (seen on a phone: 3P was cut off at both sides); camera.aspect is what to pass', () => {
+  for (const id of ['1c', '2l', '3g', '3p', '3s']) for (const aspect of [0.45, 0.66, 1, 1.8]) {
+    const u = byId(id), e = { w: Math.max(...u.rooms.map(r => r.x + r.w)), h: Math.max(...u.rooms.map(r => r.y + r.h)) }, half = Math.hypot(e.w, e.h) / 2;
+    const narrow = Math.atan(Math.tan((42 * Math.PI) / 360) * Math.min(1, aspect)), v = liftView(u, aspect);
+    const fit = (v.radius * Math.sin(narrow)) / half;   // 1 = the unit's bounding sphere touches the edge; the iso view of a flat plan is never wider than ~0.9 of it
+    assert.ok(fit >= 0.9 - 1e-9 && fit <= 0.95, `${id} @ ${aspect}: the half-diagonal takes ${(fit * 100).toFixed(0)}% of the narrow half-view`);
+  }
+});
+
 test('LIFT_LABEL has the exact R3 text and no price word', () => {
   assert.equal(LIFT_LABEL, 'Indicative 3D from published plans · rooms only; walls, doors and finishes are not shown');
   assert.doesNotMatch(LIFT_LABEL, /₹|price|lakh|crore/i);
